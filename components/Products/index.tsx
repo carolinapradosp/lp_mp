@@ -105,14 +105,14 @@ export default function Products({ products }: ProductsProps) {
                             lg:text-5xl
                         "
                     >
-                        Sua saúde com
+                        Vender ficou
                         <span className="text-blue-600">
-                            {' '}mais cuidado
+                            {' '}muito mais fácil
                         </span>
                     </h2>
 
                     <p className="mx-auto mt-4 max-w-3xl text-base leading-relaxed text-slate-600">
-                        Produtos selecionados com qualidade, segurança e entrega rápida.
+                        Sua vitrine digital pronta para atrair clientes, gerar pedidos e impulsionar o crescimento do seu negócio.
                     </p>
                 </div>
 
@@ -234,14 +234,16 @@ export default function Products({ products }: ProductsProps) {
                                         </div>
                                     )}
 
-                                    <Image
-                                        src={
-                                            product.image_url
-                                        }
-                                        alt={product.title}
-                                        width={240}
-                                        height={240}
-                                        className="
+
+                                    {product.image_url && (
+                                        <Image
+                                            src={
+                                                product.image_url
+                                            }
+                                            alt={product.title}
+                                            width={240}
+                                            height={240}
+                                            className="
                                             relative
                                             z-10
                                             h-auto
@@ -253,7 +255,8 @@ export default function Products({ products }: ProductsProps) {
                                             duration-500
                                             group-hover:scale-110
                                         "
-                                    />
+                                        />
+                                    )}
                                 </div>
 
                                 {/* CONTEÚDO */}

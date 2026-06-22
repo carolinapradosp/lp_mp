@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import MiniCart from "../Minicart";
-import logo from '@/public/logo.png';
+import logo from '@/public/logo.jpg';
 import { useCartStore } from "@/store/cartStore";
 import Link from "next/link";
 
@@ -48,7 +48,7 @@ export default function Header() {
                     </p>
 
                     <div className="flex items-center gap-6 text-xs font-medium text-white/90">
-                        <span>Saúde • Bem-estar • Conveniência</span>
+                        <span>Descontos de até 50% • Aproveite agora</span>
                         <span>Frete Expresso</span>
                     </div>
                 </div>

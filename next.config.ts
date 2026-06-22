@@ -5,15 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'express-pharma-seven.vercel.app',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.expresspharma.com.br',
-      },
-      {
-        protocol: 'https',
-        hostname: 'expresspharma.com.br',
+        hostname: 'lp-mp-pearl.vercel.app',
       },
     ],
   },

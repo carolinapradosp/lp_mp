@@ -133,13 +133,15 @@ export default function MiniCart({ products }: ProductsProps) {
                                             <div className="flex gap-4">
                                                 {/* IMAGEM */}
                                                 <div className="flex h-22 w-22 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-linear-to-br from-slate-50 to-blue-50">
-                                                    <Image
-                                                        src={product.image_url}
-                                                        alt={product.title}
-                                                        width={74}
-                                                        height={74}
-                                                        className="h-auto w-auto object-contain"
-                                                    />
+                                                    {product.image_url && (
+                                                        <Image
+                                                            src={product.image_url}
+                                                            alt={product.title}
+                                                            width={74}
+                                                            height={74}
+                                                            className="h-auto w-auto object-contain"
+                                                        />
+                                                    )}
                                                 </div>
 
                                                 {/* CONTEÚDO */}

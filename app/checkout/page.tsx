@@ -23,7 +23,7 @@ export default function Checkout() {
   const [paymentBrickKey, setPaymentBrickKey] = useState(0);
 
   // frete fixo
-  const shippingCost = 150;
+  const shippingCost = 0;
 
   const [formData, setFormData] = useState({
     name: '',
