@@ -3,11 +3,11 @@ export default function HeaderAdmin() {
         <header className="mb-10">
             <h1 className="text-4xl font-black">
                 <span className="text-red-500">
-                    EXPRESS
+                    LP
                 </span>
 
                 <span className="text-blue-500">
-                    PHARMA
+                    MP
                 </span>
             </h1>
 

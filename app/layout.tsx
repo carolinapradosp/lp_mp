@@ -20,8 +20,8 @@ const montSerrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: 'Express Pharma',
-  description: 'Compre agora os melhores produtos farmacêuticos com descontos incríveis!',
+  title: 'LP MP',
+  description: 'Compre agora os melhores produtos com descontos incríveis!',
   icons: '/icon.png',
   robots: {
     index: false,

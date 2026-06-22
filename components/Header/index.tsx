@@ -114,7 +114,7 @@ export default function Header() {
                     >
 
 
-                        <Image src={logo} alt="Express Pharma" width={220} />
+                        <Image src={logo} alt="LP MP" width={220} />
 
 
                         <p

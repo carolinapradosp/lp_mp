@@ -66,7 +66,7 @@ export default function Footer() {
                 {/* ESQUERDA */}
                 <div>
                     <a href="/">
-                        <Image src={logo} alt="Express Pharma" width={120} />
+                        <Image src={logo} alt="LP MP" width={120} />
                     </a>
 
                     <p
@@ -130,7 +130,7 @@ export default function Footer() {
                     <p className="text-sm text-slate-500">
                         &copy; {new Date().getFullYear()}{' '}
                         <span className="font-semibold text-slate-700">
-                            Express Pharma
+                            LP MP
                         </span>
                         . Todos os direitos reservados.
                     </p>

@@ -80,9 +80,9 @@ export default function AdminLoginPage() {
                         </div>
 
                         <h1 className="text-4xl font-black tracking-tight text-white">
-                            EXPRESS{" "}
+                            LP{" "}
                             <span className="text-blue-100">
-                                PHARMA
+                                MP
                             </span>
                         </h1>
 
