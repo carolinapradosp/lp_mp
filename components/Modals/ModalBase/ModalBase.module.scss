@@ -1,0 +1,58 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-bg-dark), transparent 20%);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+}
+
+.modalWrapper {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  z-index: 101;
+
+  .card {
+    background: linear-gradient(
+      180deg,
+      var(--color-bg-panel) 0%,
+      var(--color-bg-dark) 100%
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--color-accent-purple), transparent 70%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 1rem;
+    position: relative;
+    color: var(--color-text-light);
+    width: 100%;
+    max-width: 375px;
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.8),
+      0 0 15px color-mix(in srgb, var(--color-accent-purple), transparent 85%);
+  }
+
+  .closeButton {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      color: var(--color-text-light);
+      transform: scale(1.1);
+    }
+  }
+}

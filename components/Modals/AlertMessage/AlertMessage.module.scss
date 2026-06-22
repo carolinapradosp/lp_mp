@@ -1,0 +1,70 @@
+.container {
+  text-align: center;
+  border-radius: 20px;
+  flex-direction: column;
+  align-items: center;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+
+  .iconCircle {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-green), white 40%) 0%,
+      var(--color-accent-green) 100%
+    );
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 15px
+      color-mix(in srgb, var(--color-accent-green), transparent 60%);
+
+    span {
+      color: var(--color-bg-dark);
+      font-size: 2rem;
+      font-weight: bold;
+    }
+  }
+
+  .message {
+    color: var(--color-text-light);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+  }
+
+  .button {
+    margin-top: 0.5rem;
+    padding: 12px;
+    background: linear-gradient(
+      180deg,
+      var(--color-accent-green) 0%,
+      color-mix(in srgb, var(--color-accent-green), black 30%) 100%
+    );
+    border: none;
+    border-radius: 10px;
+    color: var(--color-text-light);
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.2s;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 4px 14px
+      color-mix(in srgb, var(--color-accent-green), transparent 70%);
+
+    &:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 6px 20px
+        color-mix(in srgb, var(--color-accent-green), transparent 50%);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
