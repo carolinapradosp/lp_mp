@@ -48,7 +48,7 @@ export default function MiniCart({ products }: ProductsProps) {
 
                 {totalItems > 0 && (
                     <span
-                        className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-linear-to-r from-blue-600 to-red-500 px-1 text-[10px] font-semibold text-white transition-all duration-300 ${isAnimate ? "scale-115" : "scale-100"
+                        className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-linear-to-r from-blue-600 to-blue-500 px-1 text-[10px] font-semibold text-white transition-all duration-300 ${isAnimate ? "scale-115" : "scale-100"
                             }`}
                     >
                         {totalItems}
@@ -168,7 +168,7 @@ export default function MiniCart({ products }: ProductsProps) {
 
                                                         <button
                                                             onClick={() => remove(product.id)}
-                                                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-400 transition-all hover:bg-red-100 hover:text-red-500"
+                                                            className="flex cursor-pointer h-10 w-10 shrink-0 items-center justify-center text-black transition-all hover:text-black-500"
                                                         >
                                                             <Trash2 size={17} />
                                                         </button>
@@ -179,7 +179,7 @@ export default function MiniCart({ products }: ProductsProps) {
                                                         <div className="flex h-11 w-fit items-center overflow-hidden rounded-xl border border-blue-100 bg-slate-50">
                                                             <button
                                                                 onClick={() => decrease(product.id)}
-                                                                className="flex h-full w-11 shrink-0 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
+                                                                className="flex cursor-pointer h-full w-11 shrink-0 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
                                                             >
                                                                 <Minus size={16} />
                                                             </button>
@@ -190,7 +190,7 @@ export default function MiniCart({ products }: ProductsProps) {
 
                                                             <button
                                                                 onClick={() => increase(product.id)}
-                                                                className="flex h-full w-11 shrink-0 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
+                                                                className="flex cursor-pointerS h-full w-11 shrink-0 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
                                                             >
                                                                 <Plus size={16} />
                                                             </button>
@@ -251,7 +251,7 @@ export default function MiniCart({ products }: ProductsProps) {
                     {/* FOOTER */}
                     {products.length > 0 && (
                         <div className="border-t border-blue-100 bg-white p-5">
-                            <div className="mb-5 flex items-center justify-between rounded-3xl bg-linear-to-r from-slate-50 to-blue-50 p-4">
+                            <div className="mb-5 flex items-center justify-between p-4">
                                 <div>
                                     <p className="text-sm text-slate-500">
                                         Subtotal
@@ -261,20 +261,13 @@ export default function MiniCart({ products }: ProductsProps) {
                                         {formatCurrency(Number(totalPrice || 0))}
                                     </strong>
                                 </div>
-
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
-                                    <ShoppingCart
-                                        size={28}
-                                        className="text-blue-600"
-                                    />
-                                </div>
                             </div>
 
                             <button
                                 onClick={() =>
                                     (window.location.href = "/checkout")
                                 }
-                                className="w-full cursor-pointer rounded-2xl bg-linear-to-r from-blue-600 via-indigo-500 to-red-500 px-5 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_12px_30px_rgba(59,130,246,0.30)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(59,130,246,0.40)]"
+                                className="w-full cursor-pointer rounded-2xl bg-linear-to-r from-blue-600 to-blue-500 px-5 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_12px_30px_rgba(59,130,246,0.30)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(59,130,246,0.40)]"
                             >
                                 Finalizar Compra
                             </button>

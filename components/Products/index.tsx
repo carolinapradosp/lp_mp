@@ -11,16 +11,16 @@ export default function Products({ products }: ProductsProps) {
     } = useCartStore();
 
     const handleAddToCart = (
-        product: any,
-        unitPrice: number,
-        quantity: number
+        product: ProductsProps['products'][number],
+        unitPrice: number
     ) => {
+        // Envia sempre 1 unidade ao clicar no botão da vitrine
         addToCart({
             id: product.id,
             title: product.title,
             price: unitPrice,
             base_price: product.base_price,
-            quantity: quantity,
+            quantity: 1,
             image_url: product.image_url,
             pricing_rules: product.pricing_rules,
         });
@@ -120,26 +120,21 @@ export default function Products({ products }: ProductsProps) {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                     {products.map((product) => {
                         const cartItem = cartProducts.find(
-                            (item) =>
-                                String(item.id) ===
-                                String(product.id)
+                            (item) => String(item.id) === String(product.id)
                         );
 
-                        const quantity =
-                            cartItem?.quantity || 1;
+                        // Quantidade atual para cálculo de preço dinâmico na vitrine
+                        const currentQuantity = cartItem?.quantity || 1;
 
                         const unitPrice = getUnitPrice(
                             product.base_price,
-                            quantity,
+                            currentQuantity,
                             product.pricing_rules
                         );
 
-                        const total =
-                            quantity * unitPrice;
+                        const total = currentQuantity * unitPrice;
 
-                        const hasDiscount =
-                            unitPrice <
-                            product.base_price;
+                        const hasDiscount = unitPrice < product.base_price;
 
                         return (
                             <article
@@ -170,7 +165,7 @@ export default function Products({ products }: ProductsProps) {
                                         top-0
                                         h-2
                                         bg-linear-to-r
-                                        from-red-500
+                                        from-blue-200
                                         via-blue-500
                                         to-blue-700
                                     "
@@ -234,27 +229,24 @@ export default function Products({ products }: ProductsProps) {
                                         </div>
                                     )}
 
-
                                     {product.image_url && (
                                         <Image
-                                            src={
-                                                product.image_url
-                                            }
+                                            src={product.image_url}
                                             alt={product.title}
                                             width={240}
                                             height={240}
                                             className="
-                                            relative
-                                            z-10
-                                            h-auto
-                                            max-h-56
-                                            w-auto
-                                            max-w-full
-                                            object-contain
-                                            transition-transform
-                                            duration-500
-                                            group-hover:scale-110
-                                        "
+                                                relative
+                                                z-10
+                                                h-auto
+                                                max-h-56
+                                                w-auto
+                                                max-w-full
+                                                object-contain
+                                                transition-transform
+                                                duration-500
+                                                group-hover:scale-110
+                                            "
                                         />
                                     )}
                                 </div>
@@ -288,7 +280,7 @@ export default function Products({ products }: ProductsProps) {
                                     <div className="relative z-10 flex flex-1 flex-col">
 
                                         {/* TITULO */}
-                                        <h2
+                                        <h3
                                             className="
                                                 mb-3
                                                 min-h-18
@@ -300,7 +292,7 @@ export default function Products({ products }: ProductsProps) {
                                             "
                                         >
                                             {product.title}
-                                        </h2>
+                                        </h3>
 
                                         {/* DESC */}
                                         <p
@@ -329,16 +321,16 @@ export default function Products({ products }: ProductsProps) {
                                         >
                                             <div className="mb-3 flex items-center justify-between">
                                                 <p className="text-xs font-medium text-slate-500">
-                                                    {quantity}{' '}
-                                                    {quantity > 1
+                                                    {currentQuantity}{' '}
+                                                    {currentQuantity > 1
                                                         ? 'unidades'
                                                         : 'unidade'}
                                                 </p>
 
                                                 <div
                                                     className="
-                                                    flex
-                                                    items-center
+                                                        flex
+                                                        items-center
                                                         rounded-full
                                                         bg-blue-50
                                                         px-3
@@ -355,10 +347,7 @@ export default function Products({ products }: ProductsProps) {
                                             <div className="flex flex-col">
                                                 {hasDiscount && (
                                                     <span className="text-sm text-slate-400 line-through">
-                                                        {formatCurrency(
-                                                            product.base_price ||
-                                                            0
-                                                        )}
+                                                        {formatCurrency(product.base_price || 0)}
                                                     </span>
                                                 )}
 
@@ -372,9 +361,7 @@ export default function Products({ products }: ProductsProps) {
                                                         text-slate-900
                                                     "
                                                 >
-                                                    {formatCurrency(
-                                                        unitPrice || 0
-                                                    )}
+                                                    {formatCurrency(unitPrice || 0)}
                                                 </strong>
 
                                                 {hasDiscount && (
@@ -425,9 +412,7 @@ export default function Products({ products }: ProductsProps) {
                                                         text-blue-600
                                                     "
                                                 >
-                                                    {formatCurrency(
-                                                        total || 0
-                                                    )}
+                                                    {formatCurrency(total || 0)}
                                                 </span>
                                             </div>
                                         </div>
@@ -435,13 +420,7 @@ export default function Products({ products }: ProductsProps) {
                                         {/* BTN */}
                                         <div className="mt-auto">
                                             <button
-                                                onClick={() =>
-                                                    handleAddToCart(
-                                                        product,
-                                                        unitPrice,
-                                                        quantity
-                                                    )
-                                                }
+                                                onClick={() => handleAddToCart(product, unitPrice)}
                                                 className="
                                                     relative
                                                     flex
@@ -452,7 +431,7 @@ export default function Products({ products }: ProductsProps) {
                                                     overflow-hidden
                                                     rounded-2xl
                                                     bg-linear-to-r
-                                                    from-red-500
+                                                    from-blue-400
                                                     via-blue-600
                                                     to-blue-700
                                                     px-5

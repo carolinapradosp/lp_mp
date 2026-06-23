@@ -39,7 +39,7 @@ export default function Header() {
           bg-linear-to-r
           from-blue-600
           via-blue-500
-          to-red-500
+          to-blue-900
         "
             >
                 <div className="mx-auto flex h-10 w-full max-w-480 items-center justify-between px-6 lg:px-10">
@@ -81,7 +81,7 @@ export default function Header() {
             h-40
             w-40
             rounded-full
-            bg-red-500/10
+            bg-blue-500/10
             blur-3xl
           "
                 />
@@ -142,8 +142,8 @@ export default function Header() {
                 gap-3
                 rounded-2xl
                 border
-                border-red-100
-                bg-red-50
+                border-blue-200
+                bg-blue-50
                 px-4
                 py-3
               "
@@ -153,13 +153,13 @@ export default function Header() {
                   h-3
                   w-3
                   rounded-full
-                  bg-red-500
+                  bg-blue-500
                   animate-pulse
                 "
                             />
 
                             <div>
-                                <p className="text-xs font-bold text-red-600">
+                                <p className="text-xs font-bold text-blue-800">
                                     OFERTAS ATIVAS
                                 </p>
 
