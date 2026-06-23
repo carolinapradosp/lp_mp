@@ -1,5 +1,6 @@
 import logo from '@/public/logo.jpg';
 import Image from "next/image";
+import Logo from '../Logo/Logo';
 
 export default function Footer() {
     return (
@@ -8,14 +9,7 @@ export default function Footer() {
 
                 {/* ESQUERDA - Branding & Descrição */}
                 <div className="flex flex-col items-center lg:items-start">
-                    <a href="/" className="opacity-90 transition-opacity hover:opacity-100">
-                        <Image
-                            src={logo}
-                            alt="Logo"
-                            width={110}
-                            className="h-auto object-contain brightness-[0.95]"
-                        />
-                    </a>
+                    <Logo />
 
                     <p className="mt-4 max-w-xs text-xs leading-relaxed tracking-wide text-[var(--color-brand-muted)]">
                         Entrega rápida, segurança e os melhores produtos selecionados para o seu negócio.

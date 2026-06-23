@@ -10,9 +10,7 @@ import { getPusherClient } from '@/lib/pusher-client';
 
 function OrderConfirmationContent() {
     const router = useRouter();
-
     const searchParams = useSearchParams();
-
     const { clear } = useCartStore();
 
     const paymentId = searchParams.get('paymentId');
@@ -22,19 +20,15 @@ function OrderConfirmationContent() {
         pixData,
     } = useCheckoutStore();
 
-    const [paymentStatus, setPaymentStatus] =
-        useState<StatusPayment>(
-            storedStatus || StatusPayment.pending
-        );
+    const [paymentStatus, setPaymentStatus] = useState<StatusPayment>(
+        storedStatus || StatusPayment.pending
+    );
 
     const [copied, setCopied] = useState(false);
-
-    const [paymentError, setPaymentError] =
-        useState('');
+    const [paymentError, setPaymentError] = useState('');
 
     const handleCopyPix = () => {
         setCopied(true);
-
         setTimeout(() => {
             setCopied(false);
         }, 3000);
@@ -44,23 +38,14 @@ function OrderConfirmationContent() {
         if (!paymentId) return;
 
         const pusherClient = getPusherClient();
-
-        const channel = pusherClient.subscribe(
-            `payment-${paymentId}`
-        );
+        const channel = pusherClient.subscribe(`payment-${paymentId}`);
 
         channel.bind(
             'payment-status-updated',
-            (data: {
-                status: StatusPayment;
-            }) => {
-
+            (data: { status: StatusPayment }) => {
                 setPaymentStatus(data.status);
 
-                if (
-                    data.status ===
-                    StatusPayment.approved
-                ) {
+                if (data.status === StatusPayment.approved) {
                     clear();
                 }
             }
@@ -68,12 +53,8 @@ function OrderConfirmationContent() {
 
         return () => {
             channel.unbind_all();
-
-            pusherClient.unsubscribe(
-                `payment-${paymentId}`
-            );
+            pusherClient.unsubscribe(`payment-${paymentId}`);
         };
-
     }, [paymentId, clear]);
 
     useEffect(() => {
@@ -86,39 +67,27 @@ function OrderConfirmationContent() {
                 const response = await fetch(
                     `/api/payment-status?paymentId=${paymentId}`
                 );
-
                 const data = await response.json();
 
                 if (!data?.status) return;
 
                 setPaymentStatus(data.status);
 
-                // LIMPA CARRINHO
-                if (
-                    data.status === StatusPayment.approved
-                ) {
+                if (data.status === StatusPayment.approved) {
                     clear();
-
                     isFinished = true;
-
                     clearInterval(interval);
                 }
 
-                // TERMINA POLLING EM STATUS FINAL
                 if (
                     data.status === StatusPayment.rejected ||
                     data.status === StatusPayment.cancelled
                 ) {
                     isFinished = true;
-
                     clearInterval(interval);
                 }
-
             } catch (err) {
-                console.error(
-                    'Erro polling pagamento:',
-                    err
-                );
+                console.error('Erro polling pagamento:', err);
             }
         }, 5000);
 
@@ -127,15 +96,12 @@ function OrderConfirmationContent() {
                 clearInterval(interval);
             }
         };
-
     }, [paymentId, clear]);
 
     useEffect(() => {
-
         if (!paymentId) {
             router.push('/');
         }
-
     }, [paymentId, router]);
 
     if (!paymentId) {
@@ -143,52 +109,39 @@ function OrderConfirmationContent() {
     }
 
     return (
-        <main className="min-h-screen bg-linear-to-b from-[#f8fbff] to-white px-4 py-10 flex items-center justify-center">
+        <main className="min-h-screen bg-white px-4 py-16 flex items-center justify-center">
+            <div className="w-full max-w-2xl">
 
-            <div className="mx-auto w-full max-w-3xl">
-
-                {/* TOPO */}
-                <div className="mb-8 text-center">
-
-                    <span className="mb-4 inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
-                        Pedido realizado
+                {/* CABEÇALHO EDITORIAL */}
+                <div className="mb-12 text-center">
+                    <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)]">
+                        Status do Pedido
                     </span>
 
-                    <h1 className="text-5xl font-black tracking-tight text-neutral-900">
-                        Confirmação do pedido
+                    <h1 className="text-3xl font-bold tracking-tight text-[var(--color-brand-dark)] sm:text-4xl">
+                        Confirmação de Compra
                     </h1>
 
-                    <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-neutral-500">
-                        Estamos processando o seu pagamento.
-                        Você pode acompanhar o status abaixo.
+                    <p className="mt-3 text-sm text-[var(--color-brand-muted)]">
+                        O seu pagamento está sendo processado de forma segura.
+                        Acompanhe a atualização do status em tempo real abaixo.
                     </p>
-
                 </div>
 
-                {/* CARD */}
-                <div className="overflow-hidden rounded-[36px] border border-neutral-200 bg-white shadow-[0_25px_80px_rgba(15,23,42,0.08)]">
-
-                    {/* GRADIENT */}
-                    <div className="h-2 w-full bg-linear-to-r from-blue-600 via-indigo-500 to-violet-500" />
-
-                    <div className="p-6 sm:p-10">
-
-                        <MessagePayment
-                            type={paymentStatus}
-                            amount={amount}
-                            copied={copied}
-                            orderId={paymentId}
-                            errorMessage={paymentError}
-                            onCopyPix={handleCopyPix}
-                            pixData={pixData}
-                        />
-
-                    </div>
-
+                {/* CONTAINER PRINCIPAL CONTAINER PLANO */}
+                <div className="border border-[var(--color-brand-border)] bg-white p-6 sm:p-10">
+                    <MessagePayment
+                        type={paymentStatus}
+                        amount={amount}
+                        copied={copied}
+                        orderId={paymentId}
+                        errorMessage={paymentError}
+                        onCopyPix={handleCopyPix}
+                        pixData={pixData}
+                    />
                 </div>
 
             </div>
-
         </main>
     );
 }
@@ -197,26 +150,20 @@ export default function OrderConfirmationPage() {
     return (
         <Suspense
             fallback={
-                <main className="min-h-screen bg-linear-to-b from-[#f8fbff] to-white flex items-center justify-center px-4">
-
-                    <div className="rounded-4xl border border-neutral-200 bg-white px-10 py-8 shadow-lg">
-
+                <main className="min-h-screen bg-white flex items-center justify-center px-4">
+                    <div className="border border-[var(--color-brand-border)] bg-white p-8 w-full max-w-sm text-center">
                         <div className="flex flex-col items-center">
+                            {/* Spinner minimalista de linha fina */}
+                            <div className="mb-4 h-8 w-8 animate-spin border-2 border-[var(--color-brand-border)] border-t-[var(--color-brand-dark)]" />
 
-                            <div className="mb-5 h-14 w-14 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
-
-                            <p className="text-lg font-bold text-neutral-900">
-                                Carregando pedido...
+                            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)]">
+                                Carregando informações...
                             </p>
-
-                            <span className="mt-2 text-sm text-neutral-500">
-                                Aguarde alguns instantes
+                            <span className="mt-1 text-xs text-[var(--color-brand-muted)]">
+                                Sincronizando com o gateway de pagamento.
                             </span>
-
                         </div>
-
                     </div>
-
                 </main>
             }
         >

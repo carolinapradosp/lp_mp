@@ -2,8 +2,7 @@ import { formatCurrency } from "@/utils/utils";
 import {
     ShieldCheck,
     CreditCard,
-    Truck,
-    BadgeDollarSign,
+    Zap,
 } from "lucide-react";
 
 type ResumoPagamentoProps = {
@@ -29,106 +28,86 @@ export default function ResumoPagamento({
     );
 
     return (
-        <div className="rounded-[28px] border border-neutral-200 bg-white p-6 mb-6 shadow-sm">
+        <div className="border border-[var(--color-brand-border)] bg-white p-6">
 
-            {/* RESUMO */}
-            <div className="space-y-5">
-
+            {/* VALORES DO RESUMO */}
+            <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <span className="text-neutral-500">
+                    <span className="text-xs uppercase tracking-wider text-[var(--color-brand-muted)]">
                         Subtotal
                     </span>
-
-                    <strong className="text-lg font-bold text-neutral-900">
+                    <span className="text-sm font-medium text-[var(--color-brand-dark)]">
                         {formatCurrency(subtotal)}
-                    </strong>
+                    </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-neutral-500">
-                        <Truck size={18} />
+                    <span className="text-xs uppercase tracking-wider text-[var(--color-brand-muted)]">
                         Frete
                     </span>
-
-                    <strong className="text-lg font-bold text-neutral-900">
-                        {formatCurrency(shippingCost)}
-                    </strong>
+                    <span className="text-sm font-medium text-[var(--color-brand-dark)]">
+                        {shippingCost === 0 ? "Grátis" : formatCurrency(shippingCost)}
+                    </span>
                 </div>
-
             </div>
 
             {/* DIVIDER */}
-            <div className="my-6 h-px bg-neutral-200" />
+            <div className="my-5 h-px bg-[var(--color-brand-border)]" />
 
-            {/* TOTAL */}
-            <div className="flex items-end justify-between">
-
+            {/* VALOR TOTAL EXIBIDO */}
+            <div className="flex items-baseline justify-between">
                 <div>
-                    <span className="block text-sm font-medium text-neutral-500">
-                        Total do pedido
+                    <span className="text-sm font-medium uppercase tracking-wider text-[var(--color-brand-dark)]">
+                        Total
                     </span>
-
-                    <p className="mt-1 text-xs text-neutral-400">
-                        Em até 12x no cartão
+                    <p className="mt-0.5 text-xs text-[var(--color-brand-muted)]">
+                        Disponível em até 12x
                     </p>
                 </div>
 
-                <strong className="text-4xl font-black tracking-tight text-blue-600">
+                <strong className="text-2xl font-bold tracking-tight text-[var(--color-brand-dark)]">
                     {formatCurrency(amount)}
                 </strong>
-
             </div>
 
-            {/* BENEFÍCIOS */}
-            <div className="mt-8 grid gap-3">
+            {/* COMPONENTES DE BENEFÍCIO DO CHECKOUT */}
+            <div className="mt-8 space-y-3 border-t border-[var(--color-brand-border)] pt-6">
 
-                <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-                    <ShieldCheck
-                        size={20}
-                        className="text-emerald-600"
-                    />
-
+                {/* SEGURANÇA */}
+                <div className="flex items-start gap-3">
+                    <ShieldCheck size={16} className="mt-0.5 text-[var(--color-brand-dark)] shrink-0" />
                     <div>
-                        <p className="text-sm font-bold text-neutral-900">
-                            Pagamento seguro
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)] leading-tight">
+                            Ambiente Criptografado
                         </p>
-
-                        <span className="text-xs text-neutral-500">
-                            Seus dados protegidos
+                        <span className="mt-0.5 block text-xs text-[var(--color-brand-muted)]">
+                            Seus dados pessoais e de pagamento totalmente protegidos.
                         </span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-                    <CreditCard
-                        size={20}
-                        className="text-blue-600"
-                    />
-
+                {/* PARCELAMENTO */}
+                <div className="flex items-start gap-3">
+                    <CreditCard size={16} className="mt-0.5 text-[var(--color-brand-dark)] shrink-0" />
                     <div>
-                        <p className="text-sm font-bold text-neutral-900">
-                            Parcelamento disponível
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)] leading-tight">
+                            Até 12x no Cartão
                         </p>
-
-                        <span className="text-xs text-neutral-500">
-                            Até 12x no cartão
+                        <span className="mt-0.5 block text-xs text-[var(--color-brand-muted)]">
+                            Aceitamos as principais bandeiras com aprovação em tempo real.
                         </span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-                    <BadgeDollarSign
-                        size={20}
-                        className="text-orange-500"
-                    />
-
+                {/* PIX */}
+                <div className="flex items-start gap-3">
+                    <Zap size={16} className="mt-0.5 text-[var(--color-brand-dark)] shrink-0" />
                     <div>
-                        <p className="text-sm font-bold text-neutral-900">
-                            PIX instantâneo
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)] leading-tight">
+                            PIX Instantâneo
                         </p>
-
-                        <span className="text-xs text-neutral-500">
-                            Aprovação rápida
+                        <span className="mt-0.5 block text-xs text-[var(--color-brand-muted)]">
+                            Gere o QR Code na próxima etapa para envio imediato.
                         </span>
                     </div>
                 </div>

@@ -43,9 +43,7 @@ export default function Checkout() {
     async function fetchProducts() {
       try {
         setLoadingProducts(true);
-
         const response = await fetch('/api/products');
-
         const data = await response.json();
 
         const formattedProducts = data.map((product: Product) => ({
@@ -54,13 +52,10 @@ export default function Checkout() {
         }));
 
         syncProducts(formattedProducts);
-
       } catch (error) {
         console.error('Erro ao sincronizar produtos:', error);
-
       } finally {
         setLoadingProducts(false);
-
         if (products.length === 0) {
           setLoading(false);
         }
@@ -68,27 +63,18 @@ export default function Checkout() {
     }
 
     fetchProducts();
-
   }, [syncProducts]);
 
   const subtotal = useMemo(() => {
-    return products.reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0
-    );
+    return products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   }, [products]);
 
   const amount = useMemo(() => {
     if (products.length === 0) return 0;
-
     return subtotal + shippingCost;
-
   }, [subtotal, products.length]);
 
-  const isGlobalLoading =
-    !hydrated ||
-    loading ||
-    loadingProducts;
+  const isGlobalLoading = !hydrated || loading || loadingProducts;
 
   return (
     <>
@@ -99,33 +85,34 @@ export default function Checkout() {
         />
       )}
 
-      <main className="min-h-screen bg-linear-to-b from-[#f8fbff] to-white px-4 py-10">
-        <div className="mx-auto flex w-full max-w-480 flex-col gap-8 lg:flex-row">
+      <main className="min-h-screen bg-[var(--color-brand-bg)] text-[var(--color-brand-dark)] px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-480 flex-col gap-10 lg:flex-row items-start">
 
-          {/* CONTEÚDO */}
-          <section className="w-full rounded-4xl border border-neutral-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:w-[55%] sm:p-8">
+          {/* COLUNA ESQUERDA - DADOS DE ENTREGA E PEDIDO */}
+          <section className="w-full border border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] p-6 lg:w-[58%] sm:p-10">
 
             {/* HEADER */}
-            <div className="mb-8 border-b border-neutral-100 pb-8">
-
-              <span className="mb-4 inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+            <div className="mb-8 border-b border-[var(--color-brand-border)] pb-8">
+              <span className="mb-4 inline-flex text-[10px] font-semibold uppercase tracking-widest text-[var(--color-brand-accent)] border border-[var(--color-brand-border)] bg-white px-3 py-1">
                 Checkout Seguro
               </span>
 
-              <h1 className="text-4xl font-black tracking-tight text-neutral-900">
-                Dados para entrega
+              <h1 className="text-3xl font-light tracking-tight text-[var(--color-brand-dark)] sm:text-4xl">
+                Dados para <span className="font-medium">entrega</span>
               </h1>
 
-              <p className="mt-3 max-w-xl text-neutral-500">
+              <p className="mt-3 text-xs leading-relaxed text-[var(--color-brand-muted)] max-w-md">
                 Preencha suas informações para concluir o pedido com segurança e rapidez.
               </p>
             </div>
 
             {/* RESUMO PEDIDO */}
-            <ResumoPedido />
+            <div className="mb-8">
+              <ResumoPedido />
+            </div>
 
-            {/* FORM */}
-            <div className="rounded-[28px] border border-neutral-200 bg-linear-to-b from-white to-blue-50/30 p-5 sm:p-6">
+            {/* FORMULARIO */}
+            <div className="border border-[var(--color-brand-border)] bg-white p-5 sm:p-8">
               <FormCheckout
                 formData={formData}
                 setFormData={setFormData}
@@ -133,36 +120,33 @@ export default function Checkout() {
                 setPaymentError={setPaymentError}
               />
             </div>
-
           </section>
 
-          {/* ASIDE */}
-          <aside className="w-full lg:w-[45%]">
-            <div className="sticky top-6 rounded-4xl border border-neutral-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-8">
+          {/* COLUNA DIREITA - ASIDE DE PAGAMENTO */}
+          <aside className="w-full lg:w-[42%] lg:sticky lg:top-8">
+            <div className="border border-[var(--color-brand-border)] bg-white p-6 sm:p-10">
 
-              {/* HEADER */}
-              <div className="mb-8 border-b border-neutral-100 pb-6">
-
-                <h2 className="text-3xl font-black tracking-tight text-neutral-900">
+              {/* HEADER ASIDE */}
+              <div className="mb-6 border-b border-[var(--color-brand-border)] pb-6">
+                <h2 className="text-2xl font-medium tracking-tight text-[var(--color-brand-dark)]">
                   Pagamento
                 </h2>
-
-                <p className="mt-2 text-neutral-500">
+                <p className="mt-1 text-xs text-[var(--color-brand-muted)]">
                   Ambiente seguro e criptografado.
                 </p>
-
               </div>
 
-              {/* RESUMO PAGAMENTO */}
-              <ResumoPagamento
-                products={products}
-                shippingCost={shippingCost}
-                amount={amount}
-              />
+              {/* RESUMO FINANCEIRO */}
+              <div className="mb-6">
+                <ResumoPagamento
+                  products={products}
+                  shippingCost={shippingCost}
+                  amount={amount}
+                />
+              </div>
 
-              {/* PAGAMENTO */}
-              <div className="overflow-hidden rounded-[28px] border border-neutral-200 bg-white p-2 sm:p-4">
-
+              {/* GATEWAY INTEGRATION CONTAINER */}
+              <div className="border border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] p-2 sm:p-4">
                 {amount > 0 && (
                   <PaymentBrick
                     key={paymentBrickKey}
@@ -171,20 +155,11 @@ export default function Checkout() {
                     shippingCost={shippingCost}
                     user={{
                       orderId: crypto.randomUUID(),
-
-                      firstName:
-                        formData.name.split(' ')[0] || '',
-
-                      lastName:
-                        formData.name
-                          .split(' ')
-                          .slice(1)
-                          .join(' ') || '',
-
+                      firstName: formData.name.split(' ')[0] || '',
+                      lastName: formData.name.split(' ').slice(1).join(' ') || '',
                       email: formData.email,
                       cpf: formData.cpf,
                       phone: formData.phone,
-
                       address: {
                         zipCode: formData.cep,
                         federalUnit: formData.state,
@@ -195,23 +170,18 @@ export default function Checkout() {
                         complement: formData.complement,
                       },
                     }}
-
                     setLoading={setLoading}
-
                     onStatusChange={({
                       status,
                       paymentId,
                       pixData,
                       errorMessage,
                     }) => {
-
                       setPaymentError('');
 
                       if (errorMessage) {
                         setPaymentError(errorMessage);
-
                         setPaymentBrickKey((prev) => prev + 1);
-
                         return;
                       }
 
@@ -221,31 +191,24 @@ export default function Checkout() {
                         paymentId,
                         amount,
                         status: status as StatusPayment,
-
-                        pixData:
-                          pixData?.qrCode &&
-                            pixData?.qrCodeBase64
-                            ? {
-                              qrCode: pixData.qrCode,
-                              qrCodeBase64:
-                                pixData.qrCodeBase64,
-                            }
-                            : undefined,
+                        pixData: pixData?.qrCode && pixData?.qrCodeBase64
+                          ? {
+                            qrCode: pixData.qrCode,
+                            qrCodeBase64: pixData.qrCodeBase64,
+                          }
+                          : undefined,
                       });
 
-                      router.push(
-                        `/order-confirmation?paymentId=${paymentId}`
-                      );
+                      router.push(`/order-confirmation?paymentId=${paymentId}`);
                     }}
                   />
                 )}
-
               </div>
 
-              {/* VOLTAR */}
+              {/* BOTAO AUXILIAR DE RETORNO */}
               <button
                 onClick={() => router.push('/')}
-                className="mt-8 flex h-14 w-full items-center justify-center rounded-2xl border border-neutral-200 bg-neutral-50 px-5 text-sm font-black uppercase tracking-wide text-neutral-700 transition-all duration-300 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                className="mt-6 flex h-12 w-full items-center justify-center border border-[var(--color-brand-border)] bg-transparent text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)] transition-all duration-200 hover:border-[var(--color-brand-dark)] hover:text-[var(--color-brand-dark)] cursor-pointer"
               >
                 Voltar e alterar carrinho
               </button>

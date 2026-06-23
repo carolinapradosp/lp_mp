@@ -157,7 +157,7 @@ export default function OrderDetailsPage({
             />
 
             <main className="min-h-screen bg-slate-50 px-4 py-6 lg:px-6">
-                <div className="mx-auto max-w-7xl">
+                <div className="mx-auto max-w-480">
 
                     {/* HEADER */}
                     <div className="mb-8">

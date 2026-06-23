@@ -21,20 +21,15 @@ export default function FormCheckout({
 }: FormCheckoutProps) {
 
     const [errors, setErrors] = useState<Errors>({});
-
     const cpfRef = useRef<HTMLInputElement>(null);
 
-    const isCpfError =
-        paymentError ===
-        'CPF inválido. Por favor, verifique e tente novamente.';
+    const isCpfError = paymentError === 'CPF inválido. Por favor, verifique e tente novamente.';
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         const { name, value } = e.target;
-
         let formattedValue = value;
 
         if (name === 'phone') formattedValue = maskPhone(value);
-
         if (name === 'cpf') formattedValue = maskCPF(value);
 
         setFormData((prev) => ({
@@ -55,7 +50,6 @@ export default function FormCheckout({
     }
 
     useEffect(() => {
-
         function validateForm() {
             const requiredFields = [
                 'name',
@@ -65,77 +59,69 @@ export default function FormCheckout({
                 'cep',
                 'address',
                 'number',
+                'district', // Corrigido para bater com o name mapeado
+                'city',
+                'state',
             ];
 
             const newErrors: Errors = {};
 
             requiredFields.forEach((field) => {
-
-                if (
-                    !formData[field as keyof FormDataProps]
-                        ?.toString()
-                        .trim()
-                ) {
+                if (!formData[field as keyof FormDataProps]?.toString().trim()) {
                     newErrors[field] = true;
                 }
             });
 
             setErrors(newErrors);
-
             return Object.keys(newErrors).length === 0;
         }
 
         (window as any).validateCheckoutForm = validateForm;
-
     }, [formData]);
 
     useEffect(() => {
-
         if (isCpfError && cpfRef.current) {
             cpfRef.current.scrollIntoView({
                 behavior: 'smooth',
                 block: 'center',
             });
-
             cpfRef.current.focus();
         }
-
     }, [isCpfError]);
 
+    // Input minimalista, plano e sem sombras, alinhado ao seu @theme
     const inputClass = (field: string) => `
-        h-14 w-full rounded-2xl border bg-white
-        px-5 text-neutral-900 placeholder:text-neutral-400
-        outline-none transition-all duration-300
-        shadow-sm
+        h-12 w-full border bg-white
+        px-4 text-sm text-[var(--color-brand-dark)] placeholder:text-[var(--color-brand-muted)]/50
+        outline-none transition-colors duration-200
         ${errors[field] || (field === 'cpf' && isCpfError)
-            ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-            : 'border-neutral-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100'
+            ? 'border-red-500 focus:border-red-600'
+            : 'border-[var(--color-brand-border)] focus:border-[var(--color-brand-dark)]'
         }
     `;
 
-    return (
-        <>
-            {/* DADOS PESSOAIS */}
-            <div className="mb-10">
+    // Labels minimalistas padronizadas
+    const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)]";
+    const errorTextClass = "mt-1.5 text-xs font-medium text-red-500";
 
-                <div className="mb-6">
-                    <h2 className="text-2xl font-black tracking-tight text-neutral-900">
+    return (
+        <div className="space-y-12">
+
+            {/* SEÇÃO: DADOS PESSOAIS */}
+            <div>
+                <div className="mb-6 border-b border-[var(--color-brand-border)] pb-4">
+                    <h2 className="text-xl font-medium tracking-tight text-[var(--color-brand-dark)]">
                         Dados pessoais
                     </h2>
-
-                    <p className="mt-2 text-sm text-neutral-500">
-                        Utilize seus dados reais para garantir a aprovação do pagamento.
+                    <p className="mt-1 text-xs text-[var(--color-brand-muted)]">
+                        Utilize seus dados reais para garantir a aprovação imediata do seu pagamento.
                     </p>
                 </div>
 
                 <div className="grid gap-5">
-
                     {/* NOME */}
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                            Nome completo
-                        </label>
-
+                        <label className={labelClass}>Nome completo</label>
                         <input
                             type="text"
                             name="name"
@@ -144,43 +130,26 @@ export default function FormCheckout({
                             placeholder="Digite seu nome completo"
                             className={inputClass('name')}
                         />
-
-                        {errors.name && (
-                            <p className="mt-2 text-sm font-medium text-red-500">
-                                O nome é obrigatório
-                            </p>
-                        )}
+                        {errors.name && <p className={errorTextClass}>O nome completo é obrigatório</p>}
                     </div>
 
                     {/* EMAIL / TELEFONE */}
-                    <div className="grid gap-5 md:grid-cols-2">
-
+                    <div className="grid gap-5 sm:grid-cols-2">
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                E-mail
-                            </label>
-
+                            <label className={labelClass}>E-mail</label>
                             <input
                                 type="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                placeholder="Digite seu e-mail"
+                                placeholder="seu@email.com"
                                 className={inputClass('email')}
                             />
-
-                            {errors.email && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    O e-mail é obrigatório
-                                </p>
-                            )}
+                            {errors.email && <p className={errorTextClass}>O e-mail é obrigatório</p>}
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                Telefone
-                            </label>
-
+                            <label className={labelClass}>Telefone / WhatsApp</label>
                             <input
                                 type="text"
                                 name="phone"
@@ -189,22 +158,13 @@ export default function FormCheckout({
                                 placeholder="(11) 99999-9999"
                                 className={inputClass('phone')}
                             />
-
-                            {errors.phone && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    O telefone é obrigatório
-                                </p>
-                            )}
+                            {errors.phone && <p className={errorTextClass}>O telefone é obrigatório</p>}
                         </div>
-
                     </div>
 
                     {/* CPF */}
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                            CPF
-                        </label>
-
+                        <label className={labelClass}>CPF</label>
                         <input
                             ref={cpfRef}
                             type="text"
@@ -214,44 +174,28 @@ export default function FormCheckout({
                             placeholder="000.000.000-00"
                             className={inputClass('cpf')}
                         />
-
-                        {errors.cpf && (
-                            <p className="mt-2 text-sm font-medium text-red-500">
-                                O CPF é obrigatório
-                            </p>
-                        )}
-
-                        {!errors.cpf && isCpfError && (
-                            <p className="mt-2 text-sm font-medium text-red-500">
-                                {paymentError}
-                            </p>
-                        )}
+                        {errors.cpf && <p className={errorTextClass}>O CPF é obrigatório</p>}
+                        {!errors.cpf && isCpfError && <p className={errorTextClass}>{paymentError}</p>}
                     </div>
-
                 </div>
             </div>
 
-            {/* ENDEREÇO */}
+            {/* SEÇÃO: ENDEREÇO */}
             <div>
-                <div className="mb-6">
-                    <h2 className="text-2xl font-black tracking-tight text-neutral-900">
+                <div className="mb-6 border-b border-[var(--color-brand-border)] pb-4">
+                    <h2 className="text-xl font-medium tracking-tight text-[var(--color-brand-dark)]">
                         Endereço de entrega
                     </h2>
-                    <p className="mt-2 text-sm text-neutral-500">
-                        Informe o endereço onde deseja receber o pedido.
+                    <p className="mt-1 text-xs text-[var(--color-brand-muted)]">
+                        Informe onde deseja receber o seu pacote.
                     </p>
                 </div>
 
                 <div className="grid gap-5">
-
                     {/* CEP / ENDEREÇO */}
-                    <div className="grid gap-5 md:grid-cols-3">
-
+                    <div className="grid gap-5 sm:grid-cols-3">
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                CEP
-                            </label>
-
+                            <label className={labelClass}>CEP</label>
                             <input
                                 type="text"
                                 name="cep"
@@ -260,66 +204,40 @@ export default function FormCheckout({
                                 placeholder="00000-000"
                                 className={inputClass('cep')}
                             />
-
-                            {errors.cep && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    O CEP é obrigatório
-                                </p>
-                            )}
+                            {errors.cep && <p className={errorTextClass}>O CEP é obrigatório</p>}
                         </div>
 
-                        <div className="md:col-span-2">
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                Rua / Avenida
-                            </label>
-
+                        <div className="sm:col-span-2">
+                            <label className={labelClass}>Rua / Avenida</label>
                             <input
                                 type="text"
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
-                                placeholder="Rua, avenida..."
+                                placeholder="Nome da rua, avenida..."
                                 className={inputClass('address')}
                             />
-
-                            {errors.address && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    O endereço é obrigatório
-                                </p>
-                            )}
+                            {errors.address && <p className={errorTextClass}>O endereço é obrigatório</p>}
                         </div>
-
                     </div>
 
                     {/* NÚMERO / BAIRRO */}
-                    <div className="grid gap-5 md:grid-cols-2">
-
+                    <div className="grid gap-5 sm:grid-cols-3">
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                Número
-                            </label>
-
+                            <label className={labelClass}>Número</label>
                             <input
                                 type="text"
                                 name="number"
                                 value={formData.number}
                                 onChange={handleChange}
-                                placeholder="Número"
+                                placeholder="123"
                                 className={inputClass('number')}
                             />
-
-                            {errors.number && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    O número é obrigatório
-                                </p>
-                            )}
+                            {errors.number && <p className={errorTextClass}>Obrigatório</p>}
                         </div>
 
-                        <div>
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                Bairro
-                            </label>
-
+                        <div className="sm:col-span-2">
+                            <label className={labelClass}>Bairro</label>
                             <input
                                 type="text"
                                 name="district"
@@ -328,24 +246,14 @@ export default function FormCheckout({
                                 placeholder="Bairro"
                                 className={inputClass('district')}
                             />
-
-                            {errors.neighborhood && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    O bairro é obrigatório
-                                </p>
-                            )}
+                            {errors.district && <p className={errorTextClass}>O bairro é obrigatório</p>}
                         </div>
-
                     </div>
 
-                    {/* CIDADE / ESTADO */}
-                    <div className="grid gap-5 md:grid-cols-2">
-
-                        <div>
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                Cidade
-                            </label>
-
+                    {/* CIDADE / ESTADO / COMPLEMENTO */}
+                    <div className="grid gap-5 sm:grid-cols-4">
+                        <div className="sm:col-span-2">
+                            <label className={labelClass}>Cidade</label>
                             <input
                                 type="text"
                                 name="city"
@@ -354,19 +262,11 @@ export default function FormCheckout({
                                 placeholder="Cidade"
                                 className={inputClass('city')}
                             />
-
-                            {errors.city && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    A cidade é obrigatória
-                                </p>
-                            )}
+                            {errors.city && <p className={errorTextClass}>A cidade é obrigatória</p>}
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                                Estado
-                            </label>
-
+                            <label className={labelClass}>Estado</label>
                             <input
                                 type="text"
                                 name="state"
@@ -376,35 +276,24 @@ export default function FormCheckout({
                                 maxLength={2}
                                 className={inputClass('state')}
                             />
-
-                            {errors.state && (
-                                <p className="mt-2 text-sm font-medium text-red-500">
-                                    O estado é obrigatório
-                                </p>
-                            )}
+                            {errors.state && <p className={errorTextClass}>Obrigatório</p>}
                         </div>
 
+                        <div>
+                            <label className={labelClass}>Complemento</label>
+                            <input
+                                type="text"
+                                name="complement"
+                                value={formData.complement}
+                                onChange={handleChange}
+                                placeholder="Apt, bloco..."
+                                className={inputClass('complement')}
+                            />
+                        </div>
                     </div>
-
-                    {/* COMPLEMENTO */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-neutral-700">
-                            Complemento
-                        </label>
-
-                        <input
-                            type="text"
-                            name="complement"
-                            value={formData.complement}
-                            onChange={handleChange}
-                            placeholder="Apartamento, bloco..."
-                            className={inputClass('complement')}
-                        />
-                    </div>
-
-
                 </div>
             </div>
-        </>
+
+        </div>
     );
 }

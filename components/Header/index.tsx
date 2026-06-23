@@ -5,6 +5,7 @@ import MiniCart from "../Minicart";
 import logo from '@/public/logo.jpg';
 import { useCartStore } from "@/store/cartStore";
 import Link from "next/link";
+import Logo from "../Logo/Logo";
 
 export default function Header() {
     const { products: cartProducts } = useCartStore();
@@ -17,7 +18,7 @@ export default function Header() {
         <header className="sticky top-0 z-50 w-full border-b border-brand-border bg-white/80 backdrop-blur-md transition-all">
             {/* Linha superior minimalista */}
             <div className="hidden md:block border-b border-brand-border bg-brand-bg">
-                <div className="mx-auto flex h-9 w-full max-w-7xl items-center justify-between px-6 text-[11px] font-medium tracking-wide text-brand-muted lg:px-10">
+                <div className="mx-auto flex h-9 w-full max-w-480 items-center justify-between px-6 text-[11px] font-medium tracking-wide text-brand-muted lg:px-10">
                     <p className="uppercase tracking-[0.15em]">
                         Entrega rápida • Compra segura
                     </p>
@@ -30,17 +31,8 @@ export default function Header() {
             </div>
 
             {/* Header principal */}
-            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
-                {/* LOGO */}
-                <Link href="/" className="flex items-center">
-                    <Image
-                        src={logo}
-                        alt="Logo"
-                        width={160}
-                        priority
-                        className="h-auto w-auto object-contain"
-                    />
-                </Link>
+            <div className="mx-auto flex w-full max-w-480 items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
+                <Logo />
 
                 {/* DIREITA - Ações e Carrinho */}
                 <div className="flex items-center gap-4">

@@ -38,7 +38,7 @@ export default function DashboardPage() {
             />
 
             <main className="min-h-screen bg-[#f5f7fb] p-4 lg:p-8">
-                <div className="mx-auto max-w-7xl">
+                <div className="mx-auto max-w-480">
 
                     <HeaderAdmin />
 
