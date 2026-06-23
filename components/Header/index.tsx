@@ -7,175 +7,57 @@ import { useCartStore } from "@/store/cartStore";
 import Link from "next/link";
 
 export default function Header() {
-    const {
-        products: cartProducts,
-    } = useCartStore();
+    const { products: cartProducts } = useCartStore();
 
     const isHomepage =
         typeof window !== 'undefined' &&
         window.location.pathname === '/';
 
     return (
-        <header
-            className="
-        sticky
-        top-0
-        z-50
-        w-full
-        border-b
-        border-blue-100
-        bg-white/90
-        transition-all
-        shadow-[0_8px_30px_rgba(15,23,42,0.04)]
-      "
-        >
-            {/* Linha superior */}
-            <div
-                className="
-          hidden
-          md:block
-          border-b
-          border-blue-100
-          bg-linear-to-r
-          from-blue-600
-          via-blue-500
-          to-blue-900
-        "
-            >
-                <div className="mx-auto flex h-10 w-full max-w-480 items-center justify-between px-6 lg:px-10">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90">
+        <header className="sticky top-0 z-50 w-full border-b border-brand-border bg-white/80 backdrop-blur-md transition-all">
+            {/* Linha superior minimalista */}
+            <div className="hidden md:block border-b border-brand-border bg-brand-bg">
+                <div className="mx-auto flex h-9 w-full max-w-7xl items-center justify-between px-6 text-[11px] font-medium tracking-wide text-brand-muted lg:px-10">
+                    <p className="uppercase tracking-[0.15em]">
                         Entrega rápida • Compra segura
                     </p>
 
-                    <div className="flex items-center gap-6 text-xs font-medium text-white/90">
+                    <div className="flex items-center gap-6">
                         <span>Descontos de até 50% • Aproveite agora</span>
-                        <span>Frete Expresso</span>
+                        <span className="font-semibold text-brand-dark">Frete Expresso</span>
                     </div>
                 </div>
             </div>
 
             {/* Header principal */}
-            <div className="relative overflow-hidden">
-                {/* Glow decorativo */}
-                <div
-                    className="
-            pointer-events-none
-            absolute
-            -left-20
-            top-1/2
-            h-48
-            w-48
-            -translate-y-1/2
-            rounded-full
-            bg-blue-500/10
-            blur-3xl
-          "
-                />
+            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
+                {/* LOGO */}
+                <Link href="/" className="flex items-center">
+                    <Image
+                        src={logo}
+                        alt="Logo"
+                        width={160}
+                        priority
+                        className="h-auto w-auto object-contain"
+                    />
+                </Link>
 
-                <div
-                    className="
-            pointer-events-none
-            absolute
-            right-0
-            top-0
-            h-40
-            w-40
-            rounded-full
-            bg-blue-500/10
-            blur-3xl
-          "
-                />
-
-                <div
-                    className="
-            relative
-            mx-auto
-            flex
-            w-full
-            max-w-480
-            items-center
-            justify-between
-            gap-4
-            px-4
-            py-4
-            sm:px-6
-            lg:px-10
-          "
-                >
-                    {/* LOGO */}
-                    <Link
-                        href="/"
-                        className="
-              group
-              flex
-              items-center
-              gap-4
-            "
-                    >
-
-
-                        <Image src={logo} alt="LP MP" width={220} />
-
-
-                        <p
-                            className="
-                    mt-1
-                    text-xs
-                    font-medium
-                    uppercase
-                    tracking-[0.18em]
-                    text-slate-500
-                  "
-                        >
-
-                        </p>
-                    </Link>
-
-                    {/* DIREITA */}
-                    <div className="flex items-center gap-3">
-                        {/* Badge desktop */}
-                        <div
-                            className="
-                hidden
-                lg:flex
-                items-center
-                gap-3
-                rounded-2xl
-                border
-                border-blue-200
-                bg-blue-50
-                px-4
-                py-3
-              "
-                        >
-                            <div
-                                className="
-                  h-3
-                  w-3
-                  rounded-full
-                  bg-blue-500
-                  animate-pulse
-                "
-                            />
-
-                            <div>
-                                <p className="text-xs font-bold text-blue-800">
-                                    OFERTAS ATIVAS
-                                </p>
-
-                                <p className="text-xs text-slate-500">
-                                    Aproveite descontos exclusivos
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Carrinho */}
-                        {isHomepage && (
-                            <MiniCart
-                                products={cartProducts}
-                            />
-                        )}
+                {/* DIREITA - Ações e Carrinho */}
+                <div className="flex items-center gap-4">
+                    {/* Badge simplificado combinando com a nova identidade */}
+                    <div className="hidden lg:flex items-center gap-2 rounded-full border border-brand-border bg-brand-bg px-3 py-1.5">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[11px] font-bold tracking-wider text-brand-dark uppercase">
+                            Ofertas Ativas
+                        </span>
                     </div>
+
+                    {/* Carrinho */}
+                    {isHomepage && (
+                        <div className="relative">
+                            <MiniCart products={cartProducts} />
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

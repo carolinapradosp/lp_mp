@@ -1,16 +1,13 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-blue-50: #e6ffff; /* Suavização do seu #cdffff */
-  --color-blue-100: #cdffff; /* SEU TOM ORIGINAL */
-  --color-blue-200: #94e7ff; /* SEU TOM ORIGINAL */
-  --color-blue-300: #6ae4ff; /* Interpolação */
-  --color-blue-400: #40cfff; /* SEU TOM ORIGINAL */
-  --color-blue-500: #2499c7; /* SEU TOM ORIGINAL */
-  --color-blue-600: #1080ac; /* Interpolação */
-  --color-blue-700: #006691; /* SEU TOM ORIGINAL */
-  --color-blue-800: #004d6e; /* Extrapolação para contraste */
-  --color-blue-900: #00334a; /* Extrapolação para contraste profundo */
+  --color-brand-bg: #fdfbf7; /* Fundo off-white super leve e sofisticado */
+  --color-brand-dark: #333333; /* Botões principais e textos de destaque (Checkout) */
+  --color-brand-muted: #7a7a7a; /* Subtítulos e informações secundárias */
+  --color-brand-border: #eeeeee; /* Linhas divisórias ultra finas */
+
+  /* Mantendo suporte para o badge discreto se necessário */
+  --color-brand-accent: #8b5a2b; /* Tom terroso opcional se quiser usar nos badges */
 }
 
 :root {

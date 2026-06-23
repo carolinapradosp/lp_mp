@@ -51,7 +51,7 @@ export default function Home() {
   return (
     <>
       {isLoading && <LoadingOverlay visible={isLoading} message='Carregando...' />}
-      <main className="min-h-screen bg-[#FAFAFA]">
+      <main className="min-h-screen">
         <Products
           products={products}
         />

@@ -29,26 +29,22 @@ export default function MiniCart({ products }: ProductsProps) {
         if (totalItems === 0) return;
 
         setIsAnimate(true);
-
-        const timer = setTimeout(() => {
-            setIsAnimate(false);
-        }, 300);
-
+        const timer = setTimeout(() => setIsAnimate(false), 300);
         return () => clearTimeout(timer);
     }, [totalItems]);
 
     return (
         <>
-            {/* BOTÃO */}
+            {/* BOTÃO DO CARRINHO (HEADER) */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="relative flex h-13 w-13 cursor-pointer items-center justify-center rounded-2xl border border-blue-100 bg-white text-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg"
+                className="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-brand-border bg-white text-brand-dark transition-all duration-200 hover:bg-brand-bg"
             >
-                <ShoppingCart size={22} />
+                <ShoppingCart size={18} />
 
                 {totalItems > 0 && (
                     <span
-                        className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-linear-to-r from-blue-600 to-blue-500 px-1 text-[10px] font-semibold text-white transition-all duration-300 ${isAnimate ? "scale-115" : "scale-100"
+                        className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-dark px-1 text-[9px] font-bold text-white transition-all duration-300 ${isAnimate ? "scale-120" : "scale-100"
                             }`}
                     >
                         {totalItems}
@@ -56,220 +52,154 @@ export default function MiniCart({ products }: ProductsProps) {
                 )}
             </button>
 
-            {/* OVERLAY */}
+            {/* OVERLAY GLOBAL */}
             <div
-                className={`fixed inset-0 z-999 transition-all duration-300 ${isOpen ? "visible opacity-100" : "invisible opacity-0"
+                className={`fixed inset-0 z-60 h-screen transition-all duration-300 ${isOpen ? "visible opacity-100" : "invisible opacity-0"
                     }`}
             >
-                {/* BACKDROP */}
+                {/* BACKDROP PRETO FOSCO */}
                 <div
                     onClick={() => setIsOpen(false)}
-                    className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+                    className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"
                 />
 
-                {/* SIDEBAR */}
+                {/* SIDEBAR DO CARRINHO */}
                 <aside
-                    className={`absolute right-0 top-0 flex h-screen w-full max-w-115 flex-col overflow-hidden border-l border-blue-100 bg-[#F8FAFC] shadow-[-10px_0_40px_rgba(15,23,42,0.15)] transition-all duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
+                    className={`absolute right-0 top-0 flex h-screen w-full max-w-md flex-col overflow-hidden bg-[#fdfbf7] shadow-xl transition-all duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
                         }`}
                 >
-                    {/* HEADER */}
-                    <div className="border-b border-blue-100 bg-white px-6 py-5">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h2 className="text-[2rem] leading-none font-bold tracking-tight text-slate-900">
-                                    Meu Carrinho
+                    {/* CABEÇALHO DA SIDEBAR */}
+                    <div className="border-b border-brand-border bg-white px-6 py-5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-xl font-semibold tracking-tight text-brand-dark">
+                                    Cart
                                 </h2>
-
-                                <p className="mt-2 text-sm text-slate-500">
-                                    {totalItems} {totalItems > 1 ? "itens" : "item"}
-                                </p>
+                                <span className="text-xs text-brand-muted font-normal">
+                                    ({totalItems} {totalItems > 1 ? "items" : "item"})
+                                </span>
                             </div>
 
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-100 bg-slate-50 text-slate-500 transition-all hover:border-blue-200 hover:bg-white hover:text-slate-800"
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-brand-muted hover:bg-brand-bg hover:text-brand-dark transition-all"
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
                     </div>
 
-                    {/* LISTA */}
-                    <div className="flex-1 overflow-y-auto px-4 py-4">
+                    {/* LISTA DE PRODUTOS */}
+                    <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                         {products.length === 0 ? (
-                            <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-                                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-blue-50">
-                                    <ShoppingCart size={42} className="text-blue-500" />
-                                </div>
-
-                                <h3 className="mt-6 text-2xl font-semibold text-slate-900">
-                                    Carrinho vazio
+                            <div className="flex h-full flex-col items-center justify-center text-center">
+                                <ShoppingCart size={32} className="text-brand-muted mb-3" />
+                                <h3 className="text-base font-medium text-brand-dark">
+                                    Seu carrinho está vazio
                                 </h3>
-
-                                <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                                    Adicione produtos para continuar sua compra
+                                <p className="mt-1 text-xs text-brand-muted max-w-[200px]">
+                                    Navegue pela loja e adicione itens para começar.
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {products.map((product) => {
-                                    const quantity = product.quantity;
+                            products.map((product) => {
+                                const quantity = product.quantity;
+                                const unitPrice = getUnitPrice(product.price, quantity);
+                                const total = quantity * unitPrice;
+                                const hasDiscount = unitPrice < product.base_price;
 
-                                    const unitPrice = getUnitPrice(
-                                        product.price,
-                                        quantity
-                                    );
+                                return (
+                                    <div
+                                        key={product.id}
+                                        className="flex gap-4 border-b border-brand-border/60 pb-4 last:border-0"
+                                    >
+                                        {/* CONTAINER DA IMAGEM (IGUAL AOS CARDS DO APP) */}
+                                        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white border border-brand-border">
+                                            {product.image_url && (
+                                                <Image
+                                                    src={product.image_url}
+                                                    alt={product.title}
+                                                    width={64}
+                                                    height={64}
+                                                    className="h-auto w-auto object-contain max-h-[80%]"
+                                                />
+                                            )}
+                                        </div>
 
-                                    const total = quantity * unitPrice;
-
-                                    const hasDiscount =
-                                        unitPrice < product.base_price;
-
-                                    return (
-                                        <div
-                                            key={product.id}
-                                            className="group rounded-3xl border border-blue-100 bg-white p-4 shadow-[0_4px_20px_rgba(15,23,42,0.05)] transition-all hover:shadow-[0_8px_30px_rgba(37,99,235,0.10)]"
-                                        >
-                                            <div className="flex gap-4">
-                                                {/* IMAGEM */}
-                                                <div className="flex h-22 w-22 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-linear-to-br from-slate-50 to-blue-50">
-                                                    {product.image_url && (
-                                                        <Image
-                                                            src={product.image_url}
-                                                            alt={product.title}
-                                                            width={74}
-                                                            height={74}
-                                                            className="h-auto w-auto object-contain"
-                                                        />
-                                                    )}
+                                        {/* INFORMAÇÕES DO PRODUTO */}
+                                        <div className="flex flex-1 flex-col justify-between min-w-0">
+                                            <div>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h3 className="truncate text-sm font-medium text-brand-dark">
+                                                        {product.title}
+                                                    </h3>
+                                                    <button
+                                                        onClick={() => remove(product.id)}
+                                                        className="text-brand-muted hover:text-red-500 transition-colors p-0.5"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
                                                 </div>
 
-                                                {/* CONTEÚDO */}
-                                                <div className="min-w-0 flex-1">
-                                                    {/* TOPO */}
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div className="min-w-0">
-                                                            <h3 className="truncate text-lg font-semibold text-slate-900">
-                                                                {product.title}
-                                                            </h3>
-
-                                                            <div className="mt-2 flex items-end gap-2">
-                                                                {hasDiscount && (
-                                                                    <span className="text-xs font-medium text-slate-400 line-through">
-                                                                        {formatCurrency(product.base_price || 0)}
-                                                                    </span>
-                                                                )}
-
-                                                                <span className="text-[1.5rem] leading-none font-bold tracking-tight text-slate-900">
-                                                                    {formatCurrency(unitPrice || 0)}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <button
-                                                            onClick={() => remove(product.id)}
-                                                            className="flex cursor-pointer h-10 w-10 shrink-0 items-center justify-center text-black transition-all hover:text-black-500"
-                                                        >
-                                                            <Trash2 size={17} />
-                                                        </button>
-                                                    </div>
-
-                                                    {/* MOBILE */}
-                                                    <div className="mt-5 flex flex-col gap-4 sm:hidden">
-                                                        <div className="flex h-11 w-fit items-center overflow-hidden rounded-xl border border-blue-100 bg-slate-50">
-                                                            <button
-                                                                onClick={() => decrease(product.id)}
-                                                                className="flex cursor-pointer h-full w-11 shrink-0 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
-                                                            >
-                                                                <Minus size={16} />
-                                                            </button>
-
-                                                            <div className="flex h-full min-w-11 items-center justify-center border-x border-blue-100 px-3 text-sm font-semibold text-slate-900">
-                                                                {quantity}
-                                                            </div>
-
-                                                            <button
-                                                                onClick={() => increase(product.id)}
-                                                                className="flex cursor-pointerS h-full w-11 shrink-0 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
-                                                            >
-                                                                <Plus size={16} />
-                                                            </button>
-                                                        </div>
-
-                                                        <div>
-                                                            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                                                                Total
-                                                            </p>
-
-                                                            <strong className="text-[2rem] leading-none font-bold tracking-tight text-blue-600">
-                                                                {formatCurrency(Number(total || 0))}
-                                                            </strong>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* DESKTOP */}
-                                                    <div className="mt-5 hidden items-center justify-between gap-4 sm:flex">
-                                                        <div className="flex h-11 items-center overflow-hidden rounded-xl border border-blue-100 bg-slate-50">
-                                                            <button
-                                                                onClick={() => decrease(product.id)}
-                                                                className="flex h-full w-11 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
-                                                            >
-                                                                <Minus size={16} />
-                                                            </button>
-
-                                                            <div className="flex h-full min-w-11 items-center justify-center border-x border-blue-100 px-3 text-sm font-semibold text-slate-900">
-                                                                {quantity}
-                                                            </div>
-
-                                                            <button
-                                                                onClick={() => increase(product.id)}
-                                                                className="flex h-full w-11 items-center justify-center text-slate-500 transition-all hover:bg-white hover:text-slate-900"
-                                                            >
-                                                                <Plus size={16} />
-                                                            </button>
-                                                        </div>
-
-                                                        <div className="text-right">
-                                                            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                                                                Total
-                                                            </p>
-
-                                                            <strong className="text-2xl font-bold tracking-tight text-blue-600">
-                                                                {formatCurrency(Number(total || 0))}
-                                                            </strong>
-                                                        </div>
-                                                    </div>
+                                                {/* PREÇOS UNITÁRIOS */}
+                                                <div className="mt-1 flex items-center gap-1.5 text-xs">
+                                                    {hasDiscount && (
+                                                        <span className="text-brand-muted line-through">
+                                                            {formatCurrency(product.base_price || 0)}
+                                                        </span>
+                                                    )}
+                                                    <span className="font-semibold text-brand-dark">
+                                                        {formatCurrency(unitPrice || 0)}
+                                                    </span>
                                                 </div>
                                             </div>
+
+                                            {/* SELETOR DE QUANTIDADE E TOTAL (ESTILO SOFA APP) */}
+                                            <div className="mt-2 flex items-center justify-between">
+                                                <div className="flex h-8 items-center overflow-hidden rounded-lg border border-brand-border bg-white">
+                                                    <button
+                                                        onClick={() => decrease(product.id)}
+                                                        className="flex h-full w-8 items-center justify-center text-brand-muted hover:bg-brand-bg hover:text-brand-dark transition-colors"
+                                                    >
+                                                        <Minus size={12} />
+                                                    </button>
+                                                    <span className="flex h-full min-w-8 items-center justify-center px-2 text-xs font-medium text-brand-dark border-x border-brand-border">
+                                                        {quantity}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => increase(product.id)}
+                                                        className="flex h-full w-8 items-center justify-center text-brand-muted hover:bg-brand-bg hover:text-brand-dark transition-colors"
+                                                    >
+                                                        <Plus size={12} />
+                                                    </button>
+                                                </div>
+
+                                                <span className="text-sm font-semibold text-brand-dark">
+                                                    {formatCurrency(Number(total || 0))}
+                                                </span>
+                                            </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    </div>
+                                );
+                            })
                         )}
                     </div>
 
-                    {/* FOOTER */}
+                    {/* RODAPÉ DO CARRINHO */}
                     {products.length > 0 && (
-                        <div className="border-t border-blue-100 bg-white p-5">
-                            <div className="mb-5 flex items-center justify-between p-4">
-                                <div>
-                                    <p className="text-sm text-slate-500">
-                                        Subtotal
-                                    </p>
-
-                                    <strong className="mt-1 block text-4xl leading-none font-bold tracking-tight text-slate-900">
-                                        {formatCurrency(Number(totalPrice || 0))}
-                                    </strong>
-                                </div>
+                        <div className="border-t border-brand-border bg-white px-6 py-6 space-y-4">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-brand-muted font-medium">Total</span>
+                                <span className="text-xl font-bold tracking-tight text-brand-dark">
+                                    {formatCurrency(Number(totalPrice || 0))}
+                                </span>
                             </div>
 
                             <button
-                                onClick={() =>
-                                    (window.location.href = "/checkout")
-                                }
-                                className="w-full cursor-pointer rounded-2xl bg-linear-to-r from-blue-600 to-blue-500 px-5 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_12px_30px_rgba(59,130,246,0.30)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(59,130,246,0.40)]"
+                                onClick={() => (window.location.href = "/checkout")}
+                                className="w-full rounded-xl bg-brand-dark py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-all duration-200 hover:bg-brand-dark/90 active:scale-[0.99]"
                             >
-                                Finalizar Compra
+                                Checkout
                             </button>
                         </div>
                     )}
