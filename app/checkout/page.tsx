@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PaymentBrick from '@/components/PaymentBrick';
 import { useCartStore } from '@/store/cartStore';
@@ -22,8 +22,8 @@ export default function Checkout() {
   const [paymentError, setPaymentError] = useState('');
   const [paymentBrickKey, setPaymentBrickKey] = useState(0);
 
-  // frete fixo
-  const shippingCost = 0;
+  const [shippingCost, setShippingCost] = useState(0);
+  const [shippingLoaded, setShippingLoaded] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -40,41 +40,79 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    async function fetchProducts() {
+    async function loadData() {
       try {
         setLoadingProducts(true);
-        const response = await fetch('/api/products');
-        const data = await response.json();
 
-        const formattedProducts = data.map((product: Product) => ({
-          ...product,
-          base_price: Number(product.base_price),
-        }));
+        const [productsResponse, settingsResponse] =
+          await Promise.all([
+            fetch("/api/products"),
+            fetch("/api/settings"),
+          ]);
+
+        const productsData =
+          await productsResponse.json();
+
+        const settingsData =
+          await settingsResponse.json();
+
+        const formattedProducts = productsData.map(
+          (product: Product) => ({
+            ...product,
+            base_price: Number(product.base_price),
+          })
+        );
 
         syncProducts(formattedProducts);
+
+        const shippingSetting = settingsData.find(
+          (item: any) =>
+            item.key === "shipping_cost"
+        );
+
+        setShippingCost(
+          Number(shippingSetting?.value ?? 0)
+        );
+        setShippingLoaded(true);
       } catch (error) {
-        console.error('Erro ao sincronizar produtos:', error);
+        console.error(error);
+        setShippingLoaded(true);
+
       } finally {
         setLoadingProducts(false);
+
         if (products.length === 0) {
           setLoading(false);
         }
       }
     }
 
-    fetchProducts();
+    loadData();
+
   }, [syncProducts]);
 
   const subtotal = useMemo(() => {
-    return products.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    return products.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0
+    );
   }, [products]);
 
   const amount = useMemo(() => {
-    if (products.length === 0) return 0;
     return subtotal + shippingCost;
-  }, [subtotal, products.length]);
+  }, [subtotal, shippingCost]);
 
-  const isGlobalLoading = !hydrated || loading || loadingProducts;
+  const amountRef = useRef(amount);
+
+  useEffect(() => {
+    amountRef.current = amount;
+  }, [amount]);
+
+  const isGlobalLoading =
+    !hydrated ||
+    loading ||
+    loadingProducts ||
+    !shippingLoaded;
 
   return (
     <>
@@ -187,16 +225,23 @@ export default function Checkout() {
 
                       if (!paymentId) return;
 
+                      console.log('teste-->', {
+                        amount,
+                        shippingCost,
+                        subtotal,
+                      });
+
                       setCheckoutData({
                         paymentId,
-                        amount,
+                        amount: amountRef.current,
                         status: status as StatusPayment,
-                        pixData: pixData?.qrCode && pixData?.qrCodeBase64
-                          ? {
-                            qrCode: pixData.qrCode,
-                            qrCodeBase64: pixData.qrCodeBase64,
-                          }
-                          : undefined,
+                        pixData:
+                          pixData?.qrCode && pixData?.qrCodeBase64
+                            ? {
+                              qrCode: pixData.qrCode,
+                              qrCodeBase64: pixData.qrCodeBase64,
+                            }
+                            : undefined,
                       });
 
                       router.push(`/order-confirmation?paymentId=${paymentId}`);

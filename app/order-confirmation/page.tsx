@@ -108,6 +108,12 @@ function OrderConfirmationContent() {
         return null;
     }
 
+
+    console.log('teste order confirmation', {
+        amountFromStore: amount,
+        status: storedStatus,
+    });
+
     return (
         <main className="min-h-screen bg-white px-4 py-16 flex items-center justify-center">
             <div className="w-full max-w-2xl">
