@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import MessagePayment from '@/components/MessagePayment';
 import { useCartStore } from '@/store/cartStore';
-import StatusPayment from '../../enum/StatusPayment';
+import StatusPayment from '../../../enum/StatusPayment';
 import { useCheckoutStore } from '@/store/checkoutStore';
 import { getPusherClient } from '@/lib/pusher-client';
 
