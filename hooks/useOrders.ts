@@ -1,134 +1,151 @@
-// hooks/useOrders.ts
-
 'use client';
 
-import { Filters } from '@/interfaces/Filters';
-import { Order } from '@/interfaces/Order';
-import { useEffect, useMemo, useState } from 'react';
+import type { Filters } from '@/interfaces/Filters';
+import type { Order } from '@/interfaces/Order';
+import { getOrders } from '@/services/orders';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const initialFilters: Filters = {
+export const initialFilters: Filters = {
   orderId: '',
   cpf: '',
   email: '',
   status: '',
 };
 
-export function useOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [allOrders, setAllOrders] = useState<Order[]>([]);
+interface UseOrdersOptions {
+  initialOrders?: Order[];
+  initialTotalOrders?: number;
+}
 
-  const [loading, setLoading] = useState(true);
-
-  const [totalOrdersCount, setTotalOrdersCount] = useState(0);
+export function useOrders({
+  initialOrders = [],
+  initialTotalOrders = 0,
+}: UseOrdersOptions = {}) {
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [allOrders, setAllOrders] = useState<Order[]>(initialOrders);
 
   const [filters, setFilters] = useState<Filters>(initialFilters);
 
-  async function fetchAllOrders() {
-    try {
-      setLoading(true);
+  const [totalOrdersCount, setTotalOrdersCount] = useState(initialTotalOrders);
 
-      const response = await fetch('/api/admin/orders');
+  const [loading, setLoading] = useState(initialOrders.length === 0);
 
-      const data = await response.json();
+  const [error, setError] = useState<string | null>(null);
 
-      const normalizedOrders = Array.isArray(data.orders) ? data.orders : [];
-
-      setOrders(normalizedOrders);
-
-      setAllOrders(normalizedOrders);
-
-      setTotalOrdersCount(data.totalOrders || 0);
-    } catch (error) {
-      console.error('Erro ao buscar pedidos:', error);
-
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchOrders() {
-    try {
-      setLoading(true);
-
-      const params = new URLSearchParams();
-
-      if (filters.status) {
-        params.append('status', filters.status);
+  const loadOrders = useCallback(
+    async (
+      selectedFilters?: Filters,
+      options?: {
+        updateAllOrders?: boolean;
+        signal?: AbortSignal;
       }
+    ) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (filters.orderId) {
-        params.append('orderId', filters.orderId);
+        const data = await getOrders(selectedFilters, options?.signal);
+
+        setOrders(data.orders);
+        setTotalOrdersCount(data.totalOrders);
+
+        if (options?.updateAllOrders) {
+          setAllOrders(data.orders);
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Erro ao buscar pedidos:', error);
+
+        setOrders([]);
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível buscar os pedidos.'
+        );
+      } finally {
+        setLoading(false);
       }
+    },
+    []
+  );
 
-      if (filters.cpf) {
-        params.append('cpf', filters.cpf);
-      }
+  const fetchAllOrders = useCallback(
+    async (signal?: AbortSignal) => {
+      await loadOrders(undefined, {
+        updateAllOrders: true,
+        signal,
+      });
+    },
+    [loadOrders]
+  );
 
-      if (filters.email) {
-        params.append('email', filters.email);
-      }
+  const fetchOrders = useCallback(async () => {
+    await loadOrders(filters);
+  }, [filters, loadOrders]);
 
-      const response = await fetch(`/api/admin/orders?${params.toString()}`);
-
-      const data = await response.json();
-
-      setOrders(Array.isArray(data.orders) ? data.orders : []);
-
-      setTotalOrdersCount(data.totalOrders || 0);
-    } catch (error) {
-      console.error('Erro ao filtrar pedidos:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function clearFilters() {
+  const clearFilters = useCallback(async () => {
     setFilters(initialFilters);
 
-    fetchAllOrders();
-  }
+    await loadOrders(undefined, {
+      updateAllOrders: true,
+    });
+  }, [loadOrders]);
 
   useEffect(() => {
-    fetchAllOrders();
-  }, []);
+    if (initialOrders.length > 0) {
+      return;
+    }
 
-  function isToday(dateString: string) {
+    const controller = new AbortController();
+
+    void fetchAllOrders(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [fetchAllOrders, initialOrders.length]);
+
+  const todayStats = useMemo(() => {
     const today = new Date();
 
-    const date = new Date(dateString);
+    return allOrders.reduce(
+      (stats, order) => {
+        const orderDate = new Date(order.created_at);
 
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
+        const isToday =
+          orderDate.getDate() === today.getDate() &&
+          orderDate.getMonth() === today.getMonth() &&
+          orderDate.getFullYear() === today.getFullYear();
+
+        if (order.status !== 'approved' || !isToday) {
+          return stats;
+        }
+
+        return {
+          approvedOrders: stats.approvedOrders + 1,
+          dailyRevenue: stats.dailyRevenue + Number(order.total_amount),
+        };
+      },
+      {
+        approvedOrders: 0,
+        dailyRevenue: 0,
+      }
     );
-  }
-
-  const approvedOrders = useMemo(() => {
-    return allOrders.filter(
-      (order) => order.status === 'approved' && isToday(order.created_at)
-    ).length;
-  }, [allOrders]);
-
-  const dailyRevenue = useMemo(() => {
-    return allOrders
-      .filter(
-        (order) => order.status === 'approved' && isToday(order.created_at)
-      )
-      .reduce((acc, order) => acc + Number(order.total_amount), 0);
   }, [allOrders]);
 
   return {
     orders,
     loading,
+    error,
     filters,
     setFilters,
     totalOrdersCount,
-
-    approvedOrders,
-    dailyRevenue,
-
+    approvedOrders: todayStats.approvedOrders,
+    dailyRevenue: todayStats.dailyRevenue,
     fetchOrders,
     fetchAllOrders,
     clearFilters,
