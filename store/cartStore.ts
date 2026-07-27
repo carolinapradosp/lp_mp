@@ -1,3 +1,4 @@
+//store/cartStore.ts
 import { CartStore, Product } from '@/interfaces/Product';
 import getUnitPrice from '@/utils/cart';
 import { create } from 'zustand';
@@ -24,42 +25,48 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
       syncProducts: (freshProducts: Product[]) =>
         set((state) => ({
-          products: state.products.map((cartItem) => {
+          products: state.products.flatMap((cartItem) => {
             const updatedProduct = freshProducts.find(
-              (p) => p.id === cartItem.id
+              (product) => String(product.id) === String(cartItem.id)
             );
 
-            // Se o produto não existir mais no backend,
-            // mantém o item atual
-            if (!updatedProduct) return cartItem;
+            if (!updatedProduct) {
+              return [];
+            }
+
+            const availableQuantity = Math.min(
+              cartItem.quantity,
+              Number(updatedProduct.stock)
+            );
+
+            if (availableQuantity <= 0) {
+              return [];
+            }
 
             const updatedPrice = getUnitPrice(
-              updatedProduct.base_price,
-              cartItem.quantity,
+              Number(updatedProduct.base_price),
+              availableQuantity,
               updatedProduct.pricing_rules
             );
 
-            return {
-              ...cartItem,
-
-              // Dados atualizados do backend
-              title: updatedProduct.title,
-              image_url: updatedProduct.image_url,
-              base_price: Number(updatedProduct.base_price),
-              pricing_rules: updatedProduct.pricing_rules,
-
-              // Preço recalculado
-              price: updatedPrice,
-            };
+            return [
+              {
+                ...cartItem,
+                title: updatedProduct.title,
+                image_url: updatedProduct.image_url,
+                base_price: Number(updatedProduct.base_price),
+                pricing_rules: updatedProduct.pricing_rules,
+                quantity: availableQuantity,
+                price: updatedPrice,
+              },
+            ];
           }),
         })),
 
       addToCart: (product) =>
         set((state) => {
-          const productId = product.id;
-
           const existingIndex = state.products.findIndex(
-            (item) => item.id === productId
+            (item) => item.id === product.id
           );
 
           if (existingIndex !== -1) {
@@ -101,9 +108,7 @@ export const useCartStore = create<CartStore & CartHydration>()(
               ...state.products,
               {
                 ...product,
-                id: productId,
                 quantity: initialQuantity,
-                base_price: Number(product.base_price),
                 price: initialPrice,
               },
             ],
@@ -113,7 +118,13 @@ export const useCartStore = create<CartStore & CartHydration>()(
       increase: (id) =>
         set((state) => ({
           products: state.products.map((item) => {
-            if (item.id !== id) return item;
+            if (item.id !== id) {
+              return item;
+            }
+
+            if (typeof item.stock === 'number' && item.quantity >= item.stock) {
+              return item;
+            }
 
             const updatedQuantity = item.quantity + 1;
 

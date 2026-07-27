@@ -47,7 +47,7 @@ export default function Header() {
                     {/* Carrinho */}
                     {isHomepage && (
                         <div className="relative">
-                            <MiniCart products={cartProducts} />
+                            <MiniCart />
                         </div>
                     )}
                 </div>

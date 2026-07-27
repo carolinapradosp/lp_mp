@@ -1,6 +1,5 @@
 "use client";
 
-import { ProductsProps } from "@/interfaces/Product";
 import { useCartStore } from "@/store/cartStore";
 import getUnitPrice from "@/utils/cart";
 import { formatCurrency } from "@/utils/utils";
@@ -8,20 +7,22 @@ import { ShoppingCart, Plus, Minus, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 
-export default function MiniCart({ products }: ProductsProps) {
+export default function MiniCart() {
     const [isOpen, setIsOpen] = useState(false);
     const [isAnimate, setIsAnimate] = useState(false);
 
-    const { remove, increase, decrease } = useCartStore();
+    const products = useCartStore((state) => state.products);
+    const remove = useCartStore((state) => state.remove);
+    const increase = useCartStore((state) => state.increase);
+    const decrease = useCartStore((state) => state.decrease);
 
     const totalItems = useMemo(() => {
         return products.reduce((acc, item) => acc + item.quantity, 0);
     }, [products]);
 
     const totalPrice = useMemo(() => {
-        return products.reduce((acc, item) => {
-            const unitPrice = getUnitPrice(item.price, item.quantity);
-            return acc + item.quantity * unitPrice;
+        return products.reduce((total, item) => {
+            return total + item.quantity * item.price;
         }, 0);
     }, [products]);
 
@@ -104,7 +105,7 @@ export default function MiniCart({ products }: ProductsProps) {
                         ) : (
                             products.map((product) => {
                                 const quantity = product.quantity;
-                                const unitPrice = getUnitPrice(product.price, quantity);
+                                const unitPrice = product.price;
                                 const total = quantity * unitPrice;
                                 const hasDiscount = unitPrice < product.base_price;
 
