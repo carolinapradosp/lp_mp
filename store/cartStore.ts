@@ -34,10 +34,12 @@ export const useCartStore = create<CartStore & CartHydration>()(
               return [];
             }
 
-            const availableQuantity = Math.min(
-              cartItem.quantity,
-              Number(updatedProduct.stock)
-            );
+            const stock =
+              typeof updatedProduct.stock === 'number'
+                ? updatedProduct.stock
+                : cartItem.quantity;
+
+            const availableQuantity = Math.min(cartItem.quantity, stock);
 
             if (availableQuantity <= 0) {
               return [];
@@ -53,8 +55,10 @@ export const useCartStore = create<CartStore & CartHydration>()(
               {
                 ...cartItem,
                 title: updatedProduct.title,
+                description: updatedProduct.description,
                 image_url: updatedProduct.image_url,
-                base_price: Number(updatedProduct.base_price),
+                stock: updatedProduct.stock,
+                base_price: updatedProduct.base_price,
                 pricing_rules: updatedProduct.pricing_rules,
                 quantity: availableQuantity,
                 price: updatedPrice,
@@ -69,10 +73,17 @@ export const useCartStore = create<CartStore & CartHydration>()(
             (item) => item.id === product.id
           );
 
+          if (Number(product.stock) <= 0) {
+            return state;
+          }
+
           if (existingIndex !== -1) {
             const newProducts = [...state.products];
-
             const existingItem = newProducts[existingIndex];
+
+            if (existingItem.quantity >= product.stock) {
+              return state;
+            }
 
             const updatedQuantity = existingItem.quantity + 1;
 
@@ -84,9 +95,12 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
             newProducts[existingIndex] = {
               ...existingItem,
+              title: product.title,
+              image_url: product.image_url,
+              stock: product.stock,
               quantity: updatedQuantity,
               price: updatedPrice,
-              base_price: Number(product.base_price),
+              base_price: product.base_price,
               pricing_rules: product.pricing_rules,
             };
 
@@ -97,19 +111,17 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
           const initialQuantity = 1;
 
-          const initialPrice = getUnitPrice(
-            product.base_price,
-            initialQuantity,
-            product.pricing_rules
-          );
-
           return {
             products: [
               ...state.products,
               {
                 ...product,
                 quantity: initialQuantity,
-                price: initialPrice,
+                price: getUnitPrice(
+                  product.base_price,
+                  initialQuantity,
+                  product.pricing_rules
+                ),
               },
             ],
           };
@@ -144,25 +156,29 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
       decrease: (id) =>
         set((state) => ({
-          products: state.products
-            .map((item) => {
-              if (item.id !== id) return item;
+          products: state.products.flatMap((item) => {
+            if (item.id !== id) {
+              return [item];
+            }
 
-              const updatedQuantity = item.quantity - 1;
+            if (item.quantity <= 1) {
+              return [];
+            }
 
-              const updatedPrice = getUnitPrice(
-                item.base_price,
-                updatedQuantity,
-                item.pricing_rules
-              );
+            const updatedQuantity = item.quantity - 1;
 
-              return {
+            return [
+              {
                 ...item,
                 quantity: updatedQuantity,
-                price: updatedPrice,
-              };
-            })
-            .filter((item) => item.quantity > 0),
+                price: getUnitPrice(
+                  item.base_price,
+                  updatedQuantity,
+                  item.pricing_rules
+                ),
+              },
+            ];
+          }),
         })),
 
       remove: (id) =>

@@ -1,7 +1,8 @@
+//components/Minicart/index.tsx
+
 "use client";
 
 import { useCartStore } from "@/store/cartStore";
-import getUnitPrice from "@/utils/cart";
 import { formatCurrency } from "@/utils/utils";
 import { ShoppingCart, Plus, Minus, Trash2, X } from "lucide-react";
 import Image from "next/image";

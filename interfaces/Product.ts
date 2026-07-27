@@ -11,7 +11,7 @@ export type Product = {
   description?: string;
   base_price: number;
   image_url: string;
-  stock?: number;
+  stock: number;
   pricing_rules: PricingRule[];
 };
 

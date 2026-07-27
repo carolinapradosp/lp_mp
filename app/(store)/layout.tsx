@@ -1,8 +1,8 @@
 // app/(store)/layout.tsx
 
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 import MercadoPagoScripts from "@/components/MercadoPagoScripts";
-import SafeHeader from "@/components/SafeHeader";
 
 export default function StoreLayout({
   children,
@@ -11,7 +11,7 @@ export default function StoreLayout({
 }>) {
   return (
     <div className="flex min-h-screen flex-col">
-      <SafeHeader />
+      <Header />
 
       <main className="flex-1">
         {children}
