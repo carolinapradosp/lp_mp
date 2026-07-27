@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import type { Product } from '@/interfaces/Product';
 import { useCartStore } from '@/store/cartStore';
 import LoadingOverlay from '@/components/LoadingOverlay';
-import Products from './index';
+import ProductsList from './ProductsList';
 
 interface StoreProductsProps {
     products: Product[];
@@ -34,7 +34,7 @@ export default function StoreProducts({
                 />
             )}
 
-            <Products products={products} />
+            <ProductsList products={products} />
         </>
     );
 }
