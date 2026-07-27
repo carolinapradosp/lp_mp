@@ -1,3 +1,5 @@
+//app/(store)/order-confirmation/page.tsx
+
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';

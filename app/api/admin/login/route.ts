@@ -1,10 +1,34 @@
+// app/api/admin/login/route.ts
+
 import { NextResponse } from 'next/server';
+import { createAdminSession } from '@/lib/auth/admin-session';
+import { validateAdminCredentials } from '@/lib/auth/credentials';
+
+type LoginBody = {
+  username?: unknown;
+  password?: unknown;
+};
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as LoginBody;
 
-    const { username, password } = body;
+    if (
+      typeof body.username !== 'string' ||
+      typeof body.password !== 'string'
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Usuário e senha são obrigatórios',
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const username = body.username.trim();
+    const password = body.password;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -17,15 +41,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const adminUsername = process.env.ADMIN_USERNAME;
+    const isValid = validateAdminCredentials(username, password);
 
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    const isValidUser = username === adminUsername;
-
-    const isValidPassword = password === adminPassword;
-
-    if (!isValidUser || !isValidPassword) {
+    if (!isValid) {
       return NextResponse.json(
         {
           error: 'Usuário ou senha inválidos',
@@ -36,23 +54,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = NextResponse.json({
+    await createAdminSession();
+
+    return NextResponse.json({
       success: true,
     });
-
-    response.cookies.set({
-      name: 'admin-auth',
-      value: 'authenticated',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-      maxAge: 60 * 60 * 24, // 1 dia
-    });
-
-    return response;
   } catch (error) {
-    console.error(error);
+    console.error('Erro no login administrativo:', error);
 
     return NextResponse.json(
       {

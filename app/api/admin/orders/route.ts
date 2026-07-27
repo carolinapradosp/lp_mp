@@ -1,8 +1,23 @@
 // app/api/admin/orders/route.ts
 
+import { NextResponse } from 'next/server';
+import { verifyAdminSession } from '@/lib/auth/admin-session';
 import { getOrdersFromDatabase } from '@/lib/orders/queries';
 
 export async function GET(request: Request) {
+  const isAuthenticated = await verifyAdminSession();
+
+  if (!isAuthenticated) {
+    return NextResponse.json(
+      {
+        error: 'Não autorizado',
+      },
+      {
+        status: 401,
+      }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
 
@@ -15,11 +30,11 @@ export async function GET(request: Request) {
       offset: Number(searchParams.get('offset')) || 0,
     });
 
-    return Response.json(result);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Erro ao buscar pedidos:', error);
 
-    return Response.json(
+    return NextResponse.json(
       {
         error: 'Erro ao buscar pedidos',
       },
