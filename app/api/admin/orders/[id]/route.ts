@@ -1,3 +1,4 @@
+//api/admin/orders/[id]/route.ts
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL_PRD!);

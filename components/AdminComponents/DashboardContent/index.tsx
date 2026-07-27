@@ -4,9 +4,19 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import OrdersFilters from "@/components/AdminComponents/OrdersFilters";
 import DashboardStats from "@/components/AdminComponents/DashboardStats";
 import OrdersTable from "@/components/AdminComponents/OrdersTable";
+import type { Order } from "@/interfaces/Order";
 import { useOrders } from "@/hooks/useOrders";
 
-export default function DashboardContent() {
+
+interface DashboardContentProps {
+    initialOrders: Order[];
+    initialTotalOrders: number;
+}
+
+export default function DashboardContent({
+    initialOrders,
+    initialTotalOrders,
+}: DashboardContentProps) {
     const {
         orders,
         loading,
@@ -17,7 +27,10 @@ export default function DashboardContent() {
         dailyRevenue,
         fetchOrders,
         clearFilters,
-    } = useOrders();
+    } = useOrders({
+        initialOrders,
+        initialTotalOrders,
+    });
 
     return (
         <>

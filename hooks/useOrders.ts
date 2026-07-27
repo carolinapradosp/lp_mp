@@ -2,7 +2,7 @@
 
 import type { Filters } from '@/interfaces/Filters';
 import type { Order } from '@/interfaces/Order';
-import { getOrders } from '@/services/orders';
+import { getOrders } from '@/services/orders-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const initialFilters: Filters = {
