@@ -114,22 +114,31 @@ export default function Checkout() {
   const handlePaymentStatusChange = ({
     status,
     paymentId,
+    externalReference,
+    confirmationToken,
     pixData,
     errorMessage,
   }: {
     status: StatusPayment;
     paymentId?: string;
+
+    externalReference?: string;
+    confirmationToken?: string;
+
     pixData?: {
       qrCode: string;
-      qrCodeBase64: string;
+      qrCodeBase64?: string;
+      expirationAt?: string | null;
     };
+
     errorMessage?: string;
   }) => {
     if (errorMessage) {
       setPaymentError(errorMessage);
 
-      // Recria o Brick para permitir uma nova tentativa limpa.
-      setPaymentBrickKey((currentKey) => currentKey + 1);
+      setPaymentBrickKey(
+        (currentKey) => currentKey + 1
+      );
 
       return;
     }
@@ -144,15 +153,35 @@ export default function Checkout() {
       return;
     }
 
+    if (!externalReference) {
+      setPaymentError(
+        'O pedido foi criado sem uma referência válida.'
+      );
+
+      return;
+    }
+
+    if (!confirmationToken) {
+      setPaymentError(
+        'O pedido foi criado sem um token de confirmação.'
+      );
+
+      return;
+    }
+
     setCheckoutData({
       paymentId,
+      externalReference,
+      confirmationToken,
       amount: amountRef.current,
       status,
       pixData,
     });
 
     router.push(
-      `/order-confirmation?paymentId=${encodeURIComponent(paymentId)}`
+      `/order-confirmation?token=${encodeURIComponent(
+        confirmationToken
+      )}`
     );
   };
 

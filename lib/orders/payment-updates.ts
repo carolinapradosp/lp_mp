@@ -10,6 +10,9 @@ export type MercadoPagoPaymentResult = {
   status: MPStatus;
   paymentMethodId: string;
   transactionAmount: number;
+
+  pixQrCode: string | null;
+  pixExpirationAt: string | null;
 };
 
 export async function savePaymentResult({
@@ -28,25 +31,29 @@ export async function savePaymentResult({
 
     const updatedPayments = await client.query(
       `
-    UPDATE public.payments
-    SET
-      amount = $1,
-      status = $2,
-      payment_method = $3,
-      mercadopago_payment_id = $4,
-      mercadopago_status = $5,
-      updated_at = NOW()
-    WHERE
-      id = $6
-      AND order_id = $7
-    RETURNING id
-  `,
+          UPDATE public.payments
+          SET
+            amount = $1,
+            status = $2,
+            payment_method = $3,
+            mercadopago_payment_id = $4,
+            mercadopago_status = $5,
+            pix_qr_code = $6,
+            pix_expiration_at = $7,
+            updated_at = NOW()
+          WHERE
+            id = $8
+            AND order_id = $9
+          RETURNING id
+        `,
       [
         payment.transactionAmount,
         payment.status,
         payment.paymentMethodId,
         payment.id,
         payment.status,
+        payment.pixQrCode,
+        payment.pixExpirationAt,
         pendingOrder.paymentRecordId,
         pendingOrder.orderId,
       ]
@@ -58,15 +65,15 @@ export async function savePaymentResult({
 
     const updatedOrders = await client.query(
       `
-        UPDATE public.orders
-        SET
-          status = $1,
-          payment_method = $2,
-          mercadopago_external_id = $3,
-          updated_at = NOW()
-        WHERE id = $4
-        RETURNING id
-      `,
+          UPDATE public.orders
+          SET
+            status = $1,
+            payment_method = $2,
+            mercadopago_external_id = $3,
+            updated_at = NOW()
+          WHERE id = $4
+          RETURNING id
+        `,
       [
         payment.status,
         payment.paymentMethodId,
@@ -110,16 +117,16 @@ export async function markPaymentCreationFailed({
 
     const updatedPayments = await client.query(
       `
-    UPDATE public.payments
-    SET
-      status = $1,
-      mercadopago_status = $2,
-      updated_at = NOW()
-    WHERE
-      id = $3
-      AND order_id = $4
-    RETURNING id
-  `,
+          UPDATE public.payments
+          SET
+            status = $1,
+            mercadopago_status = $2,
+            updated_at = NOW()
+          WHERE
+            id = $3
+            AND order_id = $4
+          RETURNING id
+        `,
       [
         'rejected',
         'rejected',
@@ -127,19 +134,20 @@ export async function markPaymentCreationFailed({
         pendingOrder.orderId,
       ]
     );
+
     if (updatedPayments.rowCount === 0) {
       throw new Error('Registro local do pagamento não encontrado.');
     }
 
     const updatedOrders = await client.query(
       `
-        UPDATE public.orders
-        SET
-          status = $1,
-          updated_at = NOW()
-        WHERE id = $2
-        RETURNING id
-      `,
+          UPDATE public.orders
+          SET
+            status = $1,
+            updated_at = NOW()
+          WHERE id = $2
+          RETURNING id
+        `,
       ['rejected', pendingOrder.orderId]
     );
 

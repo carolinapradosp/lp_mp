@@ -7,6 +7,7 @@ import type { CalculatedOrder, CheckoutInput } from '@/lib/checkout/types';
 
 type CreatedOrderRow = {
   id: string | number;
+  confirmation_token: string;
 };
 
 type CreatedPaymentRow = {
@@ -17,6 +18,7 @@ export type PendingOrder = {
   orderId: string;
   paymentRecordId: string;
   externalReference: string;
+  confirmationToken: string;
   idempotencyKey: string;
 };
 
@@ -100,7 +102,9 @@ export async function createPendingOrder({
             NOW(),
             NOW()
           )
-          RETURNING id
+          RETURNING
+            id,
+            confirmation_token
         `,
       [
         customerName,
@@ -133,6 +137,10 @@ export async function createPendingOrder({
 
     if (!order) {
       throw new Error('Não foi possível criar o pedido pendente.');
+    }
+
+    if (!order.confirmation_token) {
+      throw new Error('O pedido foi criado sem token de confirmação.');
     }
 
     const orderId = String(order.id);
@@ -211,6 +219,7 @@ export async function createPendingOrder({
       orderId,
       paymentRecordId: String(paymentRecord.id),
       externalReference,
+      confirmationToken: order.confirmation_token,
       idempotencyKey,
     };
   } catch (error) {

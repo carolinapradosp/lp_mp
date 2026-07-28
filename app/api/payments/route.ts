@@ -80,6 +80,7 @@ export async function POST(request: Request) {
     try {
       await savePaymentResult({
         pendingOrder,
+
         payment: {
           id: mercadoPagoPayment.id,
 
@@ -88,23 +89,23 @@ export async function POST(request: Request) {
           paymentMethodId: mercadoPagoPayment.paymentMethodId,
 
           transactionAmount: mercadoPagoPayment.transactionAmount,
+
+          pixQrCode: mercadoPagoPayment.pixQrCode,
+
+          pixExpirationAt: mercadoPagoPayment.pixExpirationAt,
         },
       });
     } catch (error) {
-      /*
-       * Este é o cenário delicado:
-       * o Mercado Pago criou o pagamento,
-       * mas o banco não conseguiu persistir
-       * a resposta.
-       *
-       * Não marcamos o pagamento como rejeitado,
-       * pois ele existe no Mercado Pago.
-       */
       console.error('Pagamento criado, mas não persistido localmente:', {
         error,
+
         mercadoPagoPaymentId: mercadoPagoPayment.id,
+
         orderId: pendingOrder.orderId,
+
         externalReference: pendingOrder.externalReference,
+
+        confirmationToken: pendingOrder.confirmationToken,
       });
 
       return NextResponse.json(
@@ -127,11 +128,16 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         id: mercadoPagoPayment.id,
+
         status: mercadoPagoPayment.status,
 
         amount: mercadoPagoPayment.transactionAmount,
 
         externalReference: pendingOrder.externalReference,
+
+        confirmationToken: pendingOrder.confirmationToken,
+
+        pixExpirationAt: mercadoPagoPayment.pixExpirationAt,
 
         point_of_interaction: mercadoPagoPayment.pointOfInteraction,
       },

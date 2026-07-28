@@ -1,9 +1,7 @@
 // app/api/payment-status/route.ts
 
 import { NextResponse } from 'next/server';
-
 import { neon } from '@neondatabase/serverless';
-
 import { syncPaymentStatus } from '@/lib/mercadopago/sync-payment-status';
 
 const sql = neon(process.env.DATABASE_URL_PRD!);
@@ -11,11 +9,7 @@ const sql = neon(process.env.DATABASE_URL_PRD!);
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-
     const paymentId = searchParams.get('paymentId');
-
-    console.log('================ PAYMENT STATUS ================');
-
     console.log('🟡 paymentId:', paymentId);
 
     if (!paymentId) {

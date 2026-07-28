@@ -8,17 +8,25 @@ import type { CalculatedOrder, CheckoutInput } from '@/lib/checkout/types';
 import type { PendingOrder } from '@/lib/orders/create-pending-order';
 import type { MPStatus } from './payment-status';
 
+type MercadoPagoPointOfInteraction = {
+  transaction_data?: {
+    qr_code?: string;
+    qr_code_base64?: string;
+    ticket_url?: string;
+  };
+};
+
 type MercadoPagoCreatedPayment = {
   id: string;
   status: MPStatus;
   paymentMethodId: string;
   transactionAmount: number;
-  pointOfInteraction?: {
-    transaction_data?: {
-      qr_code?: string;
-      qr_code_base64?: string;
-    };
-  };
+
+  pointOfInteraction?: MercadoPagoPointOfInteraction;
+
+  pixQrCode: string | null;
+  pixQrCodeBase64: string | null;
+  pixExpirationAt: string | null;
 };
 
 function splitPhone(phone: string) {
@@ -28,6 +36,20 @@ function splitPhone(phone: string) {
     areaCode: cleanPhone.slice(0, 2),
     number: cleanPhone.slice(2),
   };
+}
+
+function normalizeDate(value: unknown): string | null {
+  if (typeof value !== 'string' && !(value instanceof Date)) {
+    return null;
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate.toISOString();
 }
 
 export async function createMercadoPagoPayment({
@@ -105,7 +127,6 @@ export async function createMercadoPagoPayment({
           category_id: 'health_beauty',
 
           quantity: item.quantity,
-
           unit_price: item.unitPrice,
 
           picture_url: item.imageUrl ?? undefined,
@@ -158,6 +179,8 @@ export async function createMercadoPagoPayment({
 
         external_reference: pendingOrder.externalReference,
 
+        confirmation_token: pendingOrder.confirmationToken,
+
         customer_email: checkout.customer.email,
 
         customer_cpf: checkout.customer.identification.number,
@@ -184,7 +207,9 @@ export async function createMercadoPagoPayment({
   if (!result.id) {
     throw new CheckoutError({
       code: 'MERCADOPAGO_PAYMENT_WITHOUT_ID',
+
       message: 'O Mercado Pago não retornou o identificador do pagamento.',
+
       statusCode: 502,
     });
   }
@@ -194,10 +219,18 @@ export async function createMercadoPagoPayment({
   if (!Number.isFinite(transactionAmount)) {
     throw new CheckoutError({
       code: 'INVALID_MERCADOPAGO_AMOUNT',
+
       message: 'O Mercado Pago retornou um valor de pagamento inválido.',
+
       statusCode: 502,
     });
   }
+
+  const pointOfInteraction = result.point_of_interaction as
+    | MercadoPagoPointOfInteraction
+    | undefined;
+
+  const transactionData = pointOfInteraction?.transaction_data;
 
   return {
     id: String(result.id),
@@ -209,6 +242,12 @@ export async function createMercadoPagoPayment({
 
     transactionAmount,
 
-    pointOfInteraction: result.point_of_interaction,
+    pointOfInteraction,
+
+    pixQrCode: transactionData?.qr_code ?? null,
+
+    pixQrCodeBase64: transactionData?.qr_code_base64 ?? null,
+
+    pixExpirationAt: normalizeDate(result.date_of_expiration),
   };
 }

@@ -1,132 +1,503 @@
-//app/(store)/order-confirmation/page.tsx
+// app/(store)/order-confirmation/page.tsx
 
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import {
+    Suspense,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+
 import MessagePayment from '@/components/MessagePayment';
-import { useCartStore } from '@/store/cartStore';
-import StatusPayment from '../../../enum/StatusPayment';
-import { useCheckoutStore } from '@/store/checkoutStore';
+import StatusPayment from '@/enum/StatusPayment';
+import type {
+    OrderConfirmationData,
+    OrderConfirmationError,
+} from '@/lib/orders/order-confirmation';
 import { getPusherClient } from '@/lib/pusher-client';
+import { useCartStore } from '@/store/cartStore';
+import { useCheckoutStore } from '@/store/checkoutStore';
+
+const POLLING_INTERVAL = 5_000;
+
+const FINAL_PAYMENT_STATUSES = new Set<StatusPayment>([
+    StatusPayment.approved,
+    StatusPayment.rejected,
+    StatusPayment.cancelled,
+    StatusPayment.refunded,
+    StatusPayment.charged_back,
+]);
+
+function OrderConfirmationLoading() {
+    return (
+        <main className="flex min-h-screen items-center justify-center bg-white px-4">
+            <div className="w-full max-w-sm border border-[var(--color-brand-border)] bg-white p-8 text-center">
+                <div className="flex flex-col items-center">
+                    <div className="mb-4 h-8 w-8 animate-spin border-2 border-[var(--color-brand-border)] border-t-[var(--color-brand-dark)]" />
+
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)]">
+                        Carregando informações...
+                    </p>
+
+                    <span className="mt-1 text-xs text-[var(--color-brand-muted)]">
+                        Consultando os dados do seu pedido.
+                    </span>
+                </div>
+            </div>
+        </main>
+    );
+}
 
 function OrderConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+
     const { clear } = useCartStore();
 
-    const paymentIdFromUrl =
-        searchParams.get('paymentId');
-
     const {
+        hydrated,
+        confirmationToken: storedConfirmationToken,
         paymentId: storedPaymentId,
-        amount,
+        externalReference: storedExternalReference,
+        amount: storedAmount,
         status: storedStatus,
-        pixData,
+        pixData: storedPixData,
+        setCheckoutData,
     } = useCheckoutStore();
 
-    const paymentId =
-        paymentIdFromUrl ?? storedPaymentId;
+    const tokenFromUrl =
+        searchParams.get('token')?.trim() || null;
 
-    const [paymentStatus, setPaymentStatus] = useState<StatusPayment>(
-        storedStatus || StatusPayment.pending
-    );
+    const confirmationToken =
+        tokenFromUrl || storedConfirmationToken;
 
-    const [copied, setCopied] = useState(false);
-    const [paymentError, setPaymentError] = useState('');
+    const storedPixDataRef = useRef(storedPixData);
+    const requestInProgressRef = useRef(false);
+    const cartClearedRef = useRef(false);
 
-    const handleCopyPix = () => {
-        setCopied(true);
-        setTimeout(() => {
-            setCopied(false);
-        }, 3000);
-    };
+    const [confirmationData, setConfirmationData] =
+        useState<OrderConfirmationData | null>(null);
 
-    useEffect(() => {
-        if (!paymentId) return;
-
-        const pusherClient = getPusherClient();
-        const channel = pusherClient.subscribe(`payment-${paymentId}`);
-
-        channel.bind(
-            'payment-status-updated',
-            (data: { status: StatusPayment }) => {
-                setPaymentStatus(data.status);
-
-                if (data.status === StatusPayment.approved) {
-                    clear();
-                }
-            }
+    const [paymentStatus, setPaymentStatus] =
+        useState<StatusPayment>(
+            storedStatus || StatusPayment.pending
         );
 
-        return () => {
-            channel.unbind_all();
-            pusherClient.unsubscribe(`payment-${paymentId}`);
-        };
-    }, [paymentId, clear]);
+    const [loading, setLoading] = useState(true);
+    const [paymentError, setPaymentError] = useState('');
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        if (!paymentId) return;
+        storedPixDataRef.current = storedPixData;
+    }, [storedPixData]);
 
-        let isFinished = false;
+    const paymentId =
+        confirmationData?.paymentId || storedPaymentId;
 
-        const interval = setInterval(async () => {
+    const externalReference =
+        confirmationData?.externalReference ||
+        storedExternalReference;
+
+    const amount =
+        confirmationData?.amount ?? storedAmount;
+
+    const pixData = useMemo(() => {
+        const qrCode =
+            confirmationData?.pixData?.qrCode ||
+            storedPixData?.qrCode;
+
+        if (!qrCode) {
+            return undefined;
+        }
+
+        return {
+            qrCode,
+            qrCodeBase64:
+                storedPixData?.qrCodeBase64,
+            expirationAt:
+                confirmationData?.pixData?.expirationAt ??
+                storedPixData?.expirationAt ??
+                null,
+        };
+    }, [
+        confirmationData?.pixData,
+        storedPixData,
+    ]);
+
+    const handleCopyPix = useCallback(() => {
+        setCopied(true);
+
+        window.setTimeout(() => {
+            setCopied(false);
+        }, 3_000);
+    }, []);
+
+    const loadOrderConfirmation =
+        useCallback(async (): Promise<OrderConfirmationData | null> => {
+            if (
+                !confirmationToken ||
+                requestInProgressRef.current
+            ) {
+                return null;
+            }
+
+            requestInProgressRef.current = true;
+
             try {
                 const response = await fetch(
-                    `/api/payment-status?paymentId=${paymentId}`
+                    `/api/orders/status?token=${encodeURIComponent(
+                        confirmationToken
+                    )}`,
+                    {
+                        method: 'GET',
+                        cache: 'no-store',
+                    }
                 );
-                const data = await response.json();
 
-                if (!data?.status) return;
+                const body = (await response.json()) as
+                    | OrderConfirmationData
+                    | OrderConfirmationError;
 
+                if (!response.ok) {
+                    const errorBody =
+                        body as OrderConfirmationError;
+
+                    throw new Error(
+                        errorBody.error ||
+                        'Não foi possível consultar o pedido.'
+                    );
+                }
+
+                const data =
+                    body as OrderConfirmationData;
+
+                setConfirmationData(data);
                 setPaymentStatus(data.status);
+                setPaymentError('');
 
-                if (data.status === StatusPayment.approved) {
-                    clear();
-                    isFinished = true;
-                    clearInterval(interval);
+                const currentStoredPixData =
+                    storedPixDataRef.current;
+
+                const qrCode =
+                    data.pixData?.qrCode ||
+                    currentStoredPixData?.qrCode;
+
+                /*
+                 * O tipo do store exige paymentId como string.
+                 * Por isso, atualizamos o store somente quando
+                 * a API já tiver retornado um paymentId válido.
+                 */
+                if (data.paymentId) {
+                    setCheckoutData({
+                        paymentId: data.paymentId,
+                        externalReference:
+                            data.externalReference,
+                        confirmationToken,
+                        amount: data.amount,
+                        status: data.status,
+
+                        pixData: qrCode
+                            ? {
+                                qrCode,
+                                qrCodeBase64:
+                                    currentStoredPixData
+                                        ?.qrCodeBase64,
+                                expirationAt:
+                                    data.pixData?.expirationAt ??
+                                    currentStoredPixData
+                                        ?.expirationAt ??
+                                    null,
+                            }
+                            : undefined,
+                    });
                 }
 
-                if (
-                    data.status === StatusPayment.rejected ||
-                    data.status === StatusPayment.cancelled
-                ) {
-                    isFinished = true;
-                    clearInterval(interval);
-                }
-            } catch (err) {
-                console.error('Erro polling pagamento:', err);
+                return data;
+            } catch (error) {
+                console.error(
+                    'Erro ao consultar confirmação do pedido:',
+                    error
+                );
+
+                setPaymentError(
+                    error instanceof Error
+                        ? error.message
+                        : 'Não foi possível consultar o pedido.'
+                );
+
+                return null;
+            } finally {
+                requestInProgressRef.current = false;
             }
-        }, 5000);
+        }, [
+            confirmationToken,
+            setCheckoutData,
+        ]);
+
+    useEffect(() => {
+        if (!hydrated) {
+            return;
+        }
+
+        if (!confirmationToken) {
+            router.replace('/');
+        }
+    }, [
+        hydrated,
+        confirmationToken,
+        router,
+    ]);
+
+    useEffect(() => {
+        if (
+            !hydrated ||
+            !confirmationToken
+        ) {
+            return;
+        }
+
+        let active = true;
+
+        async function loadInitialData() {
+            setLoading(true);
+
+            await loadOrderConfirmation();
+
+            if (active) {
+                setLoading(false);
+            }
+        }
+
+        void loadInitialData();
 
         return () => {
-            if (!isFinished) {
-                clearInterval(interval);
-            }
+            active = false;
         };
-    }, [paymentId, clear]);
+    }, [
+        hydrated,
+        confirmationToken,
+        loadOrderConfirmation,
+    ]);
+
+    useEffect(() => {
+        if (
+            paymentStatus !== StatusPayment.approved ||
+            cartClearedRef.current
+        ) {
+            return;
+        }
+
+        cartClearedRef.current = true;
+        clear();
+    }, [
+        paymentStatus,
+        clear,
+    ]);
 
     useEffect(() => {
         if (!paymentId) {
-            router.replace('/');
+            return;
         }
-    }, [paymentId, router]);
 
-    if (!paymentId) {
+        const pusherClient =
+            getPusherClient();
+
+        const channelName =
+            `payment-${paymentId}`;
+
+        const channel =
+            pusherClient.subscribe(channelName);
+
+        const handleStatusUpdated = (
+            data: {
+                status?: StatusPayment;
+            }
+        ) => {
+            if (!data.status) {
+                return;
+            }
+
+            const nextStatus = data.status;
+
+            setPaymentStatus(nextStatus);
+
+            setConfirmationData((current) => {
+                if (!current) {
+                    return current;
+                }
+
+                return {
+                    ...current,
+                    status: nextStatus,
+                };
+            });
+
+            /*
+             * O método do store exige os demais campos.
+             * Portanto, só atualizamos por completo quando
+             * já temos dados suficientes da confirmação.
+             */
+            if (
+                confirmationToken &&
+                externalReference
+            ) {
+                setCheckoutData({
+                    paymentId,
+                    externalReference,
+                    confirmationToken,
+                    amount,
+                    status: nextStatus,
+                    pixData,
+                });
+            }
+        };
+
+        channel.bind(
+            'payment-status-updated',
+            handleStatusUpdated
+        );
+
+        return () => {
+            channel.unbind(
+                'payment-status-updated',
+                handleStatusUpdated
+            );
+
+            pusherClient.unsubscribe(channelName);
+        };
+    }, [
+        paymentId,
+        confirmationToken,
+        externalReference,
+        amount,
+        pixData,
+        setCheckoutData,
+    ]);
+
+    useEffect(() => {
+        if (
+            !confirmationToken ||
+            FINAL_PAYMENT_STATUSES.has(
+                paymentStatus
+            )
+        ) {
+            return;
+        }
+
+        let cancelled = false;
+
+        let timeoutId: number | undefined;
+
+        const poll = async () => {
+            if (cancelled) {
+                return;
+            }
+
+            const data =
+                await loadOrderConfirmation();
+
+            if (
+                cancelled ||
+                (
+                    data &&
+                    FINAL_PAYMENT_STATUSES.has(
+                        data.status
+                    )
+                )
+            ) {
+                return;
+            }
+
+            timeoutId =
+                window.setTimeout(
+                    poll,
+                    POLLING_INTERVAL
+                );
+        };
+
+        timeoutId =
+            window.setTimeout(
+                poll,
+                POLLING_INTERVAL
+            );
+
+        return () => {
+            cancelled = true;
+
+            if (timeoutId !== undefined) {
+                window.clearTimeout(timeoutId);
+            }
+        };
+    }, [
+        confirmationToken,
+        paymentStatus,
+        loadOrderConfirmation,
+    ]);
+
+    if (!hydrated || loading) {
+        return (
+            <OrderConfirmationLoading />
+        );
+    }
+
+    if (!confirmationToken) {
         return null;
     }
 
+    if (
+        paymentError &&
+        !confirmationData &&
+        !paymentId
+    ) {
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-white px-4 py-16">
+                <div className="w-full max-w-lg border border-[var(--color-brand-border)] bg-white p-8 text-center">
+                    <h1 className="text-2xl font-bold tracking-tight text-[var(--color-brand-dark)]">
+                        Não foi possível carregar o pedido
+                    </h1>
 
-    console.log('teste order confirmation', {
-        amountFromStore: amount,
-        status: storedStatus,
-    });
+                    <p className="mt-4 text-sm leading-relaxed text-[var(--color-brand-muted)]">
+                        {paymentError}
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setPaymentError('');
+                            setLoading(true);
+
+                            void loadOrderConfirmation()
+                                .finally(() => {
+                                    setLoading(false);
+                                });
+                        }}
+                        className="mt-8 w-full cursor-pointer bg-[var(--color-brand-dark)] px-6 py-4 text-xs font-semibold uppercase tracking-widest text-white transition-colors duration-200 hover:bg-neutral-800"
+                    >
+                        Tentar novamente
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            router.replace('/');
+                        }}
+                        className="mt-3 w-full cursor-pointer border border-[var(--color-brand-border)] px-6 py-4 text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)] transition-colors duration-200 hover:border-[var(--color-brand-dark)] hover:text-[var(--color-brand-dark)]"
+                    >
+                        Voltar para a loja
+                    </button>
+                </div>
+            </main>
+        );
+    }
 
     return (
-        <main className="min-h-screen bg-white px-4 py-16 flex items-center justify-center">
+        <main className="flex min-h-screen items-center justify-center bg-white px-4 py-16">
             <div className="w-full max-w-2xl">
-
-                {/* CABEÇALHO EDITORIAL */}
                 <div className="mb-12 text-center">
                     <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)]">
                         Status do Pedido
@@ -137,24 +508,25 @@ function OrderConfirmationContent() {
                     </h1>
 
                     <p className="mt-3 text-sm text-[var(--color-brand-muted)]">
-                        O seu pagamento está sendo processado de forma segura.
-                        Acompanhe a atualização do status em tempo real abaixo.
+                        Acompanhe abaixo o status atualizado do seu pagamento.
                     </p>
                 </div>
 
-                {/* CONTAINER PRINCIPAL CONTAINER PLANO */}
                 <div className="border border-[var(--color-brand-border)] bg-white p-6 sm:p-10">
                     <MessagePayment
                         type={paymentStatus}
                         amount={amount}
                         copied={copied}
-                        orderId={paymentId}
+                        orderId={
+                            externalReference ||
+                            confirmationData?.orderId ||
+                            ''
+                        }
                         errorMessage={paymentError}
                         onCopyPix={handleCopyPix}
                         pixData={pixData}
                     />
                 </div>
-
             </div>
         </main>
     );
@@ -164,21 +536,7 @@ export default function OrderConfirmationPage() {
     return (
         <Suspense
             fallback={
-                <main className="min-h-screen bg-white flex items-center justify-center px-4">
-                    <div className="border border-[var(--color-brand-border)] bg-white p-8 w-full max-w-sm text-center">
-                        <div className="flex flex-col items-center">
-                            {/* Spinner minimalista de linha fina */}
-                            <div className="mb-4 h-8 w-8 animate-spin border-2 border-[var(--color-brand-border)] border-t-[var(--color-brand-dark)]" />
-
-                            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)]">
-                                Carregando informações...
-                            </p>
-                            <span className="mt-1 text-xs text-[var(--color-brand-muted)]">
-                                Sincronizando com o gateway de pagamento.
-                            </span>
-                        </div>
-                    </div>
-                </main>
+                <OrderConfirmationLoading />
             }
         >
             <OrderConfirmationContent />

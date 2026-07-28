@@ -58,12 +58,18 @@ type CustomerData = {
 type PaymentResponse = {
     id?: string | number;
     status?: StatusPayment;
+
+    externalReference?: string;
+    confirmationToken?: string;
+    pixExpirationAt?: string | null;
+
     point_of_interaction?: {
         transaction_data?: {
             qr_code?: string;
             qr_code_base64?: string;
         };
     };
+
     message?: string;
 };
 
@@ -71,15 +77,23 @@ type Props = {
     amount: number;
     products: CheckoutProduct[];
     customer: CustomerData;
+
     onStatusChange: (data: {
         status: StatusPayment;
         paymentId?: string;
+
+        externalReference?: string;
+        confirmationToken?: string;
+
         pixData?: {
             qrCode: string;
-            qrCodeBase64: string;
+            qrCodeBase64?: string;
+            expirationAt?: string | null;
         };
+
         errorMessage?: string;
     }) => void;
+
     setLoading: (loading: boolean) => void;
 };
 
@@ -299,36 +313,53 @@ export default function PaymentBrick({
                                             'Pagamento criado sem identificador.'
                                         );
                                     }
-
                                     const paymentId =
                                         String(response.id);
+
+                                    if (!response.confirmationToken) {
+                                        throw new Error(
+                                            'Pagamento criado sem token de confirmação.'
+                                        );
+                                    }
+
+                                    if (!response.externalReference) {
+                                        throw new Error(
+                                            'Pagamento criado sem referência externa.'
+                                        );
+                                    }
 
                                     const transactionData =
                                         response
                                             .point_of_interaction
                                             ?.transaction_data;
 
-                                    const hasPixData =
-                                        Boolean(
-                                            transactionData?.qr_code
-                                        ) &&
-                                        Boolean(
-                                            transactionData?.qr_code_base64
-                                        );
+                                    const hasPixQrCode =
+                                        Boolean(transactionData?.qr_code);
 
                                     onStatusChange({
                                         status:
                                             response.status ??
                                             StatusPayment.pending,
+
                                         paymentId,
-                                        pixData: hasPixData
+
+                                        externalReference:
+                                            response.externalReference,
+
+                                        confirmationToken:
+                                            response.confirmationToken,
+
+                                        pixData: hasPixQrCode
                                             ? {
                                                 qrCode:
-                                                    transactionData!
-                                                        .qr_code!,
+                                                    transactionData!.qr_code!,
+
                                                 qrCodeBase64:
-                                                    transactionData!
-                                                        .qr_code_base64!,
+                                                    transactionData?.qr_code_base64,
+
+                                                expirationAt:
+                                                    response.pixExpirationAt ??
+                                                    null,
                                             }
                                             : undefined,
                                     });
