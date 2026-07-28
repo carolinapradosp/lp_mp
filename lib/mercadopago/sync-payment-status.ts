@@ -1,197 +1,248 @@
 // lib/mercadopago/sync-payment-status.ts
 
-import { neon } from '@neondatabase/serverless';
-
-import { MercadoPagoConfig, Payment } from 'mercadopago';
-
+import { dbPool } from '@/lib/db';
 import { pusherServer } from '@/lib/pusher-server';
+import { mercadoPagoPayment } from './client';
 
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN!,
-});
+import {
+  isMPStatus,
+  isRefundLikeStatus,
+  shouldUpdatePaymentStatus,
+  type MPStatus,
+} from './payment-status';
 
-const sql = neon(process.env.DATABASE_URL_PRD!);
-
-type MPStatus =
-  | 'pending'
-  | 'approved'
-  | 'authorized'
-  | 'in_process'
-  | 'in_mediation'
-  | 'rejected'
-  | 'cancelled'
-  | 'refunded'
-  | 'charged_back';
-
-const STATUS_PRIORITY: Record<MPStatus, number> = {
-  pending: 1,
-  in_process: 2,
-  authorized: 3,
-  approved: 4,
-  refunded: 5,
-  charged_back: 6,
-  cancelled: 7,
-  rejected: 8,
-  in_mediation: 9,
+type PaymentRow = {
+  id: string;
+  order_id: string;
+  status: string | null;
+  mercadopago_status: string | null;
+  mercadopago_payment_id: string;
 };
 
-function shouldUpdateStatus(currentStatus: string, newStatus: string) {
-  const current = STATUS_PRIORITY[currentStatus as MPStatus] || 0;
+type OrderItemRow = {
+  product_id: string;
+  quantity: number | string;
+};
 
-  const next = STATUS_PRIORITY[newStatus as MPStatus] || 0;
+type TransactionResult =
+  | {
+      found: false;
+    }
+  | {
+      found: true;
+      updated: boolean;
+      orderId: string;
+    };
 
-  return next >= current;
-}
+export type SyncPaymentResult =
+  | {
+      success: true;
+      status: MPStatus;
+      updated: boolean;
+    }
+  | {
+      success: false;
+      reason: string;
+    };
 
-export async function syncPaymentStatus(mercadopagoPaymentId: string) {
+export async function syncPaymentStatus(
+  mercadopagoPaymentId: string
+): Promise<SyncPaymentResult> {
   try {
-    console.log('================ SYNC PAYMENT ================');
-
-    console.log('🟡 paymentId:', mercadopagoPaymentId);
-
-    // CONSULTA MP
-    const paymentApi = new Payment(client);
-
-    const mpPayment = await paymentApi.get({
+    const mpPayment = await mercadoPagoPayment.get({
       id: mercadopagoPaymentId,
     });
 
-    console.log('📦 MP PAYMENT:', JSON.stringify(mpPayment, null, 2));
+    const rawStatus = mpPayment.status ?? 'pending';
 
-    const statusMP = (mpPayment.status as MPStatus) || 'pending';
+    if (!isMPStatus(rawStatus)) {
+      console.error(
+        'Status desconhecido retornado pelo Mercado Pago:',
+        rawStatus
+      );
 
-    console.log('✅ statusMP:', statusMP);
-
-    // BUSCA PAYMENT LOCAL
-    const paymentResult = await sql`
-      SELECT *
-      FROM public.payments
-      WHERE mercadopago_payment_id = ${mercadopagoPaymentId}
-      LIMIT 1
-    `;
-
-    const paymentRecord = paymentResult[0];
-
-    if (!paymentRecord) {
-      console.error('❌ Payment não encontrado localmente');
-
-      return;
+      return {
+        success: false,
+        reason: 'UNKNOWN_PAYMENT_STATUS',
+      };
     }
 
-    const currentStatus = paymentRecord.mercadopago_status;
+    const statusMP = rawStatus;
+    const client = await dbPool.connect();
 
-    console.log('📦 currentStatus:', currentStatus);
+    let transactionResult: TransactionResult;
 
-    // EVITA REGRESSÃO DE STATUS
-    const canUpdate = shouldUpdateStatus(currentStatus, statusMP);
+    try {
+      await client.query('BEGIN');
 
-    console.log('✅ canUpdate:', canUpdate);
+      await client.query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
 
-    if (!canUpdate) {
-      console.log('⚠️ Ignorando regressão de status');
+      const paymentResult = await client.query<PaymentRow>(
+        `
+            SELECT
+              id,
+              order_id,
+              status,
+              mercadopago_status,
+              mercadopago_payment_id
+            FROM public.payments
+            WHERE mercadopago_payment_id = $1
+            LIMIT 1
+            FOR UPDATE
+          `,
+        [mercadopagoPaymentId]
+      );
 
-      return;
-    }
+      const paymentRecord = paymentResult.rows[0];
 
-    // DETECTA PRIMEIRA APROVAÇÃO
-    const firstApproval =
-      currentStatus !== 'approved' && statusMP === 'approved';
+      if (!paymentRecord) {
+        transactionResult = {
+          found: false,
+        };
 
-    // DETECTA REFUND
-    const refundedStatuses = ['refunded', 'charged_back', 'cancelled'];
+        await client.query('COMMIT');
+      } else {
+        const currentStatus =
+          paymentRecord.mercadopago_status ?? paymentRecord.status ?? 'pending';
 
-    const becameRefunded =
-      !refundedStatuses.includes(currentStatus) &&
-      refundedStatuses.includes(statusMP);
+        const canUpdate = shouldUpdatePaymentStatus({
+          currentStatus,
+          nextStatus: statusMP,
+        });
 
-    console.log('✅ firstApproval:', firstApproval);
+        if (!canUpdate) {
+          transactionResult = {
+            found: true,
+            updated: false,
+            orderId: paymentRecord.order_id,
+          };
 
-    console.log('✅ becameRefunded:', becameRefunded);
+          await client.query('COMMIT');
+        } else {
+          const firstApproval =
+            currentStatus !== 'approved' && statusMP === 'approved';
 
-    // UPDATE PAYMENT
-    const updatedPayment = await sql`
-      UPDATE public.payments
-      SET
-        status = ${statusMP},
+          const becameRefunded =
+            !isRefundLikeStatus(currentStatus) && isRefundLikeStatus(statusMP);
 
-        mercadopago_status = ${statusMP},
+          await client.query(
+            `
+              UPDATE public.payments
+              SET
+                status = $1,
+                mercadopago_status = $1,
+                paid_at =
+                  CASE
+                    WHEN $1 = 'approved'
+                    THEN COALESCE(
+                      paid_at,
+                      NOW()
+                    )
+                    ELSE paid_at
+                  END,
+                updated_at = NOW()
+              WHERE id = $2
+            `,
+            [statusMP, paymentRecord.id]
+          );
 
-        paid_at =
-          CASE
-            WHEN ${statusMP} = 'approved'
-            THEN COALESCE(paid_at, NOW())
-            ELSE paid_at
-          END,
+          await client.query(
+            `
+              UPDATE public.orders
+              SET
+                status = $1,
+                updated_at = NOW()
+              WHERE id = $2
+            `,
+            [statusMP, paymentRecord.order_id]
+          );
 
-        updated_at = NOW()
+          if (firstApproval || becameRefunded) {
+            const itemsResult = await client.query<OrderItemRow>(
+              `
+                  SELECT
+                    product_id,
+                    quantity
+                  FROM public.order_items
+                  WHERE order_id = $1
+                `,
+              [paymentRecord.order_id]
+            );
 
-      WHERE mercadopago_payment_id = ${mercadopagoPaymentId}
+            for (const item of itemsResult.rows) {
+              const quantity = Number(item.quantity);
 
-      RETURNING *
-    `;
+              if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+                throw new Error(
+                  `Quantidade inválida no item do pedido ${paymentRecord.order_id}.`
+                );
+              }
 
-    console.log('✅ payment atualizado:', updatedPayment);
+              if (firstApproval) {
+                const updatedProduct = await client.query(
+                  `
+                      UPDATE public.products
+                      SET
+                        stock = stock - $1,
+                        updated_at = NOW()
+                      WHERE
+                        id = $2
+                        AND stock >= $1
+                      RETURNING id
+                    `,
+                  [quantity, item.product_id]
+                );
 
-    // UPDATE ORDER
-    const updatedOrder = await sql`
-      UPDATE public.orders
-      SET
-        status = ${statusMP},
-        updated_at = NOW()
+                if (updatedProduct.rowCount === 0) {
+                  throw new Error(
+                    `Estoque insuficiente para o produto ${item.product_id}.`
+                  );
+                }
+              }
 
-      WHERE id = ${paymentRecord.order_id}
+              if (becameRefunded) {
+                await client.query(
+                  `
+                    UPDATE public.products
+                    SET
+                      stock = stock + $1,
+                      updated_at = NOW()
+                    WHERE id = $2
+                  `,
+                  [quantity, item.product_id]
+                );
+              }
+            }
+          }
 
-      RETURNING *
-    `;
+          transactionResult = {
+            found: true,
+            updated: true,
+            orderId: paymentRecord.order_id,
+          };
 
-    console.log('✅ order atualizado:', updatedOrder);
-
-    // BAIXA ESTOQUE
-    if (firstApproval) {
-      console.log('📦 Baixando estoque...');
-
-      const items = await sql`
-        SELECT *
-        FROM public.order_items
-        WHERE order_id = ${paymentRecord.order_id}
-      `;
-
-      for (const item of items) {
-        await sql`
-          UPDATE public.products
-          SET stock = GREATEST(
-            stock - ${item.quantity},
-            0
-          )
-          WHERE id = ${item.product_id}
-        `;
+          await client.query('COMMIT');
+        }
       }
-
-      console.log('✅ Estoque baixado');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
 
-    // DEVOLVE ESTOQUE EM REFUND
-    if (becameRefunded) {
-      console.log('📦 Devolvendo estoque...');
+    if (!transactionResult.found) {
+      console.error(
+        'Pagamento não encontrado localmente:',
+        mercadopagoPaymentId
+      );
 
-      const items = await sql`
-        SELECT *
-        FROM public.order_items
-        WHERE order_id = ${paymentRecord.order_id}
-      `;
-
-      for (const item of items) {
-        await sql`
-          UPDATE public.products
-          SET stock = stock + ${item.quantity}
-          WHERE id = ${item.product_id}
-        `;
-      }
-
-      console.log('✅ Estoque devolvido');
+      return {
+        success: false,
+        reason: 'LOCAL_PAYMENT_NOT_FOUND',
+      };
     }
 
-    // PUSHER
     try {
       await pusherServer.trigger(
         `payment-${mercadopagoPaymentId}`,
@@ -201,23 +252,21 @@ export async function syncPaymentStatus(mercadopagoPaymentId: string) {
           paymentId: mercadopagoPaymentId,
         }
       );
-
-      console.log('✅ Evento Pusher enviado');
-    } catch (err) {
-      console.error('❌ Erro Pusher:', err);
+    } catch (error) {
+      console.error('Erro ao enviar evento Pusher:', error);
     }
-
-    console.log('================ FIM SYNC PAYMENT ================');
 
     return {
       success: true,
       status: statusMP,
+      updated: transactionResult.updated,
     };
-  } catch (err) {
-    console.error('❌ Erro syncPaymentStatus:', err);
+  } catch (error) {
+    console.error('Erro ao sincronizar pagamento:', error);
 
     return {
       success: false,
+      reason: error instanceof Error ? error.message : 'UNKNOWN_SYNC_ERROR',
     };
   }
 }

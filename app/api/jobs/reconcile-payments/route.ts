@@ -1,8 +1,7 @@
 // app/api/jobs/reconcile-payments/route.ts
 import { NextResponse } from 'next/server';
-import { neon } from '@neondatabase/serverless';
 import { syncPaymentStatus } from '@/lib/mercadopago/sync-payment-status';
-const sql = neon(process.env.DATABASE_URL_PRD!);
+import { sql } from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
@@ -22,13 +21,14 @@ export async function GET(request: Request) {
     // BUSCA PAYMENTS RECENTES
     const payments = await sql`
       SELECT
-        mercadopago_payment_id,
-        status,
-        created_at
-      FROM public.payments
-      WHERE created_at >= NOW() - INTERVAL '30 days'
-      ORDER BY created_at DESC
-      LIMIT 200
+  mercadopago_payment_id,
+  status,
+  created_at
+FROM public.payments
+WHERE created_at >= NOW() - INTERVAL '30 days'
+  AND mercadopago_payment_id IS NOT NULL
+ORDER BY created_at DESC
+LIMIT 200
     `;
 
     console.log(`📦 ${payments.length} pagamentos encontrados`);
@@ -40,8 +40,9 @@ export async function GET(request: Request) {
         const result = await syncPaymentStatus(payment.mercadopago_payment_id);
         results.push({
           paymentId: payment.mercadopago_payment_id,
-          success: result?.success || false,
-          status: result?.status || null,
+          success: result.success,
+          status: result.success ? result.status : null,
+          reason: result.success ? null : result.reason,
         });
       } catch (err) {
         console.error(

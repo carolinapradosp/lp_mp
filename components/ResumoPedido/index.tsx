@@ -1,3 +1,5 @@
+//components/ResumoPedido/index.tsx
+
 import { useCartStore } from "@/store/cartStore";
 import { formatCurrency } from "@/utils/utils";
 import Image from "next/image";

@@ -15,12 +15,18 @@ function OrderConfirmationContent() {
     const searchParams = useSearchParams();
     const { clear } = useCartStore();
 
-    const paymentId = searchParams.get('paymentId');
+    const paymentIdFromUrl =
+        searchParams.get('paymentId');
+
     const {
+        paymentId: storedPaymentId,
         amount,
         status: storedStatus,
         pixData,
     } = useCheckoutStore();
+
+    const paymentId =
+        paymentIdFromUrl ?? storedPaymentId;
 
     const [paymentStatus, setPaymentStatus] = useState<StatusPayment>(
         storedStatus || StatusPayment.pending
@@ -102,7 +108,7 @@ function OrderConfirmationContent() {
 
     useEffect(() => {
         if (!paymentId) {
-            router.push('/');
+            router.replace('/');
         }
     }, [paymentId, router]);
 

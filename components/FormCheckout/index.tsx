@@ -1,3 +1,4 @@
+// components/FormCheckout/index.tsx
 import { FormDataProps } from "@/interfaces/FormCheckout";
 import { maskCPF, maskPhone } from "@/utils/utils";
 import { useEffect, useRef, useState } from "react";
