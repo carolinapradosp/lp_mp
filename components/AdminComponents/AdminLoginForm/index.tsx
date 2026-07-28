@@ -1,3 +1,4 @@
+//components/AdminComponents/AdminLoginForm/index.tsx
 "use client";
 
 import { Lock, User } from "lucide-react";
@@ -28,6 +29,7 @@ export default function AdminLoginForm() {
                 '/api/admin/login',
                 {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type':
                             'application/json',
