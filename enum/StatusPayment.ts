@@ -1,3 +1,4 @@
+//enum/StatusPayment.ts
 enum StatusPayment {
   pending = 'pending',
   approved = 'approved',

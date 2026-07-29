@@ -1,7 +1,8 @@
 // components/PaymentBrick.tsx
+
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { loadMercadoPago } from '@mercadopago/sdk-js';
 import { apiFetch } from '@/services/api';
 import StatusPayment from '@/enum/StatusPayment';
@@ -10,229 +11,467 @@ declare global {
     interface Window {
         MercadoPago: new (
             publicKey: string,
-            options?: { locale?: string }
-        ) => any;
+            options?: {
+                locale?: string;
+            }
+        ) => {
+            bricks: () => {
+                create: (
+                    type: string,
+                    containerId: string,
+                    settings: Record<string, unknown>
+                ) => Promise<PaymentBrickController>;
+            };
+        };
+
+        validateCheckoutForm?: () => boolean;
     }
 }
 
-type Product = {
+type PaymentBrickController = {
+    unmount: () => Promise<void> | void;
+    update: (settings: Record<string, unknown>) => Promise<void> | void;
+};
+
+type CheckoutProduct = {
     id: string;
-    title: string;
     quantity: number;
-    price: number;
+};
+
+type CustomerData = {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    cpf: string;
+    address: {
+        zipCode: string;
+        federalUnit: string;
+        city: string;
+        neighborhood: string;
+        streetName: string;
+        streetNumber: string;
+        complement: string;
+    };
+};
+
+type PaymentResponse = {
+    id?: string | number;
+    status?: StatusPayment;
+
+    externalReference?: string;
+    confirmationToken?: string;
+    pixExpirationAt?: string | null;
+
+    point_of_interaction?: {
+        transaction_data?: {
+            qr_code?: string;
+            qr_code_base64?: string;
+        };
+    };
+
+    message?: string;
 };
 
 type Props = {
     amount: number;
-    products: Product[];
-    shippingCost: number;
-    user: {
-        orderId: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-        phone: string;
-        cpf: string;
-        address: {
-            zipCode: string;
-            federalUnit: string;
-            city: string;
-            neighborhood: string;
-            streetName: string;
-            streetNumber: string;
-            complement: string;
-        };
-    };
+    products: CheckoutProduct[];
+    customer: CustomerData;
+
     onStatusChange: (data: {
         status: StatusPayment;
         paymentId?: string;
-        pixData?: any;
+
+        externalReference?: string;
+        confirmationToken?: string;
+
+        pixData?: {
+            qrCode: string;
+            qrCodeBase64?: string;
+            expirationAt?: string | null;
+        };
+
         errorMessage?: string;
     }) => void;
+
     setLoading: (loading: boolean) => void;
 };
 
 export default function PaymentBrick({
     amount,
     products,
-    user,
+    customer,
     onStatusChange,
     setLoading,
-    shippingCost,
 }: Props) {
-    const mpInstance = useRef<any>(null);
-    const brickController = useRef<any>(null);
+    const mpInstance = useRef<InstanceType<typeof window.MercadoPago> | null>(
+        null
+    );
+
+    const brickController = useRef<PaymentBrickController | null>(null);
     const initialized = useRef(false);
+
     const amountRef = useRef(amount);
-    const userRef = useRef(user);
+    const customerRef = useRef(customer);
+    const productsRef = useRef(products);
 
-    useEffect(() => { userRef.current = user; }, [user]);
-    useEffect(() => { amountRef.current = amount; }, [amount]);
+    useEffect(() => {
+        amountRef.current = amount;
+    }, [amount]);
 
-    const initPaymentBrick = async () => {
-        if (initialized.current || brickController.current) return;
+    useEffect(() => {
+        customerRef.current = customer;
+    }, [customer]);
 
-        const container = document.getElementById('paymentCardBrick_container');
-        if (!container || container.childElementCount > 0) return;
+    useEffect(() => {
+        productsRef.current = products;
+    }, [products]);
+
+    const initPaymentBrick = useCallback(async () => {
+        if (initialized.current || brickController.current) {
+            return;
+        }
+
+        const container = document.getElementById(
+            'paymentCardBrick_container'
+        );
+
+        if (!container || container.childElementCount > 0) {
+            return;
+        }
 
         try {
             initialized.current = true;
+
             await loadMercadoPago();
 
-            if (!mpInstance.current) {
-                mpInstance.current = new window.MercadoPago(
-                    process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!,
-                    { locale: 'pt-BR' }
+            const publicKey =
+                process.env.NEXT_PUBLIC_MP_PUBLIC_KEY;
+
+            if (!publicKey) {
+                throw new Error(
+                    'NEXT_PUBLIC_MP_PUBLIC_KEY não configurada.'
                 );
             }
 
-            const bricksBuilder = mpInstance.current.bricks();
+            if (!window.MercadoPago) {
+                throw new Error(
+                    'SDK do Mercado Pago não foi carregado.'
+                );
+            }
 
-            brickController.current = await bricksBuilder.create(
-                'payment',
-                'paymentCardBrick_container',
-                {
-                    initialization: {
-                        amount: Number(amountRef.current),
-                        payer: { email: user.email },
-                    },
-                    customization: {
-                        paymentMethods: {
-                            bankTransfer: 'all',
-                            creditCard: 'all',
-                            maxInstallments: 12,
+            if (!mpInstance.current) {
+                mpInstance.current = new window.MercadoPago(
+                    publicKey,
+                    {
+                        locale: 'pt-BR',
+                    }
+                );
+            }
+
+            const bricksBuilder =
+                mpInstance.current.bricks();
+
+            brickController.current =
+                await bricksBuilder.create(
+                    'payment',
+                    'paymentCardBrick_container',
+                    {
+                        initialization: {
+                            amount: Number(amountRef.current),
+                            payer: {
+                                email: customerRef.current.email,
+                            },
                         },
-                        visual: {
-                            style: { theme: 'light' },
-                            hideFormTitle: true,
-                        },
-                    },
-                    callbacks: {
-                        onReady: () => {
-                            // Desativa o loading inicial da página quando o Mercado Pago está pronto
-                            setLoading(false);
-                        },
-                        onSubmit: async ({ formData }: any) => {
-                            // 🚀 Ativa o loading quando o usuário clica em "Pagar"
-                            setLoading(true);
 
-                            const isValid = (window as any).validateCheckoutForm?.();
+                        customization: {
+                            paymentMethods: {
+                                bankTransfer: 'all',
+                                creditCard: 'all',
+                                maxInstallments: 12,
+                            },
 
-                            if (!isValid) {
-                                setLoading(false); // Desativa se o formulário for inválido
-                                onStatusChange({
-                                    status: StatusPayment.rejected,
-                                    errorMessage: 'Preencha os campos obrigatórios.',
-                                });
-                                return;
-                            }
-
-                            const currentUser = userRef.current;
-                            const payload = {
-                                ...formData,
-                                transaction_amount: Number(amountRef.current),
-                                products,
-                                shippingCost,
-                                orderId: currentUser?.orderId,
-                                payer: {
-                                    ...formData.payer,
-                                    first_name: currentUser?.firstName,
-                                    last_name: currentUser?.lastName,
-                                    email: currentUser?.email,
-                                    address: {
-                                        zip_code: currentUser?.address?.zipCode,
-                                        federal_unit: currentUser?.address?.federalUnit,
-                                        city: currentUser?.address?.city,
-                                        neighborhood: currentUser?.address?.neighborhood,
-                                        street_name: currentUser?.address?.streetName,
-                                        street_number: currentUser?.address?.streetNumber,
-                                    }
+                            visual: {
+                                style: {
+                                    theme: 'light',
                                 },
-                                customer: {
-                                    firstName: currentUser?.firstName,
-                                    lastName: currentUser?.lastName,
-                                    email: currentUser?.email,
-                                    phone: currentUser?.phone,
-                                    identification: {
-                                        type: 'CPF',
-                                        number: currentUser?.cpf.replace(/\D/g, ''),
+                                hideFormTitle: true,
+                            },
+                        },
+
+                        callbacks: {
+                            onReady: () => {
+                                setLoading(false);
+                            },
+
+                            onSubmit: async ({
+                                formData,
+                            }: {
+                                formData: Record<string, any>;
+                            }) => {
+                                setLoading(true);
+
+                                const isValid =
+                                    window.validateCheckoutForm?.() ??
+                                    false;
+
+                                if (!isValid) {
+                                    setLoading(false);
+
+                                    onStatusChange({
+                                        status:
+                                            StatusPayment.rejected,
+                                        errorMessage:
+                                            'Preencha os campos obrigatórios.',
+                                    });
+
+                                    return;
+                                }
+
+                                const currentCustomer =
+                                    customerRef.current;
+
+                                const payload = {
+                                    items: productsRef.current.map(
+                                        (product) => ({
+                                            productId: product.id,
+                                            quantity: product.quantity,
+                                        })
+                                    ),
+
+                                    payment: {
+                                        token: formData.token,
+                                        paymentMethodId:
+                                            formData.payment_method_id,
+                                        issuerId:
+                                            formData.issuer_id,
+                                        installments:
+                                            formData.installments,
                                     },
-                                    address: currentUser?.address,
-                                },
-                            };
 
-                            return apiFetch('/api/payments', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload),
-                            })
-                                .then((res) => {
-                                    if (res.id) {
-                                        onStatusChange({
-                                            status: res.status,
-                                            paymentId: res.id.toString(),
-                                            pixData: res.status === 'pending' ? {
-                                                qrCode: res.point_of_interaction?.transaction_data?.qr_code,
-                                                qrCodeBase64: res.point_of_interaction?.transaction_data?.qr_code_base64,
-                                            } : undefined,
-                                        });
-                                    }
-                                    if (res.status === 'approved') {
-                                        onStatusChange({ status: StatusPayment.approved });
-                                    }
-                                })
-                                .catch((err) => {
-                                    console.error('Erro pagamento:', err);
-                                    let errorMessage = 'Não conseguimos processar o seu pagamento.';
-                                    const errorText = err?.message || err?.cause?.message || JSON.stringify(err);
+                                    customer: {
+                                        firstName:
+                                            currentCustomer.firstName,
+                                        lastName:
+                                            currentCustomer.lastName,
+                                        email: currentCustomer.email,
+                                        phone: currentCustomer.phone,
 
-                                    if (errorText?.includes('Invalid user identification number')) {
-                                        errorMessage = 'CPF inválido. Por favor, verifique e tente novamente.';
+                                        identification: {
+                                            type: 'CPF',
+                                            number:
+                                                currentCustomer.cpf.replace(
+                                                    /\D/g,
+                                                    ''
+                                                ),
+                                        },
+
+                                        address: {
+                                            zipCode:
+                                                currentCustomer.address
+                                                    .zipCode,
+                                            federalUnit:
+                                                currentCustomer.address
+                                                    .federalUnit,
+                                            city:
+                                                currentCustomer.address.city,
+                                            neighborhood:
+                                                currentCustomer.address
+                                                    .neighborhood,
+                                            streetName:
+                                                currentCustomer.address
+                                                    .streetName,
+                                            streetNumber:
+                                                currentCustomer.address
+                                                    .streetNumber,
+                                            complement:
+                                                currentCustomer.address
+                                                    .complement,
+                                        },
+                                    },
+                                };
+
+                                try {
+                                    const response =
+                                        (await apiFetch(
+                                            '/api/payments',
+                                            {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type':
+                                                        'application/json',
+                                                },
+                                                body: JSON.stringify(
+                                                    payload
+                                                ),
+                                            }
+                                        )) as PaymentResponse;
+
+                                    if (!response.id) {
+                                        throw new Error(
+                                            response.message ||
+                                            'Pagamento criado sem identificador.'
+                                        );
+                                    }
+                                    const paymentId =
+                                        String(response.id);
+
+                                    if (!response.confirmationToken) {
+                                        throw new Error(
+                                            'Pagamento criado sem token de confirmação.'
+                                        );
+                                    }
+
+                                    if (!response.externalReference) {
+                                        throw new Error(
+                                            'Pagamento criado sem referência externa.'
+                                        );
+                                    }
+
+                                    const transactionData =
+                                        response
+                                            .point_of_interaction
+                                            ?.transaction_data;
+
+                                    const hasPixQrCode =
+                                        Boolean(transactionData?.qr_code);
+
+                                    onStatusChange({
+                                        status:
+                                            response.status ??
+                                            StatusPayment.pending,
+
+                                        paymentId,
+
+                                        externalReference:
+                                            response.externalReference,
+
+                                        confirmationToken:
+                                            response.confirmationToken,
+
+                                        pixData: hasPixQrCode
+                                            ? {
+                                                qrCode:
+                                                    transactionData!.qr_code!,
+
+                                                qrCodeBase64:
+                                                    transactionData?.qr_code_base64,
+
+                                                expirationAt:
+                                                    response.pixExpirationAt ??
+                                                    null,
+                                            }
+                                            : undefined,
+                                    });
+                                } catch (error) {
+                                    console.error(
+                                        'Erro ao processar pagamento:',
+                                        error
+                                    );
+
+                                    const errorText =
+                                        error instanceof Error
+                                            ? error.message
+                                            : String(error);
+
+                                    let errorMessage =
+                                        'Não conseguimos processar o seu pagamento.';
+
+                                    if (
+                                        errorText.includes(
+                                            'Invalid user identification number'
+                                        )
+                                    ) {
+                                        errorMessage =
+                                            'CPF inválido. Por favor, verifique e tente novamente.';
                                     }
 
                                     onStatusChange({
-                                        status: StatusPayment.rejected,
+                                        status:
+                                            StatusPayment.rejected,
                                         errorMessage,
                                     });
-                                })
-                                .finally(() => {
-                                    // 🚀 Desativa o loading após finalizar a requisição (caso não tenha mudado de página)
+                                } finally {
                                     setLoading(false);
+                                }
+                            },
+
+                            onError: (error: unknown) => {
+                                console.error(
+                                    'Erro no Brick:',
+                                    error
+                                );
+
+                                setLoading(false);
+
+                                onStatusChange({
+                                    status:
+                                        StatusPayment.rejected,
+                                    errorMessage:
+                                        'Não foi possível carregar ou processar o pagamento.',
                                 });
+                            },
                         },
-                        onError: (err: any) => {
-                            console.error('Erro no Brick:', err);
-                            setLoading(false);
-                        },
-                    },
-                }
+                    }
+                );
+        } catch (error) {
+            console.error(
+                'Erro ao inicializar Mercado Pago:',
+                error
             );
-        } catch (err) {
-            console.error('Erro na inicialização:', err);
+
+            initialized.current = false;
             setLoading(false);
+
+            onStatusChange({
+                status: StatusPayment.rejected,
+                errorMessage:
+                    'Não foi possível inicializar o pagamento.',
+            });
         }
-    };
+    }, [onStatusChange, setLoading]);
 
     useEffect(() => {
-        if (!amount || amount <= 0) return;
-        const timer = setTimeout(initPaymentBrick, 50);
-        return () => clearTimeout(timer);
+        if (!amount || amount <= 0) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            void initPaymentBrick();
+        }, 50);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [amount, initPaymentBrick]);
+
+    useEffect(() => {
+        if (!brickController.current) {
+            return;
+        }
+
+        void brickController.current.update({
+            initialization: {
+                amount: Number(amount),
+            },
+        });
     }, [amount]);
 
     useEffect(() => {
         return () => {
-            brickController.current?.unmount();
+            const controller =
+                brickController.current;
+
             brickController.current = null;
+            initialized.current = false;
+
+            if (controller) {
+                void controller.unmount();
+            }
         };
     }, []);
 
-    useEffect(() => {
-        if (brickController.current) {
-            brickController.current.update({
-                initialization: { amount: Number(amount) },
-            });
-        }
-    }, [amount]);
-
-    return <div id="paymentCardBrick_container" />;
+    return (
+        <div id="paymentCardBrick_container" />
+    );
 }

@@ -1,3 +1,4 @@
+//store/cartStore.ts
 import { CartStore, Product } from '@/interfaces/Product';
 import getUnitPrice from '@/utils/cart';
 import { create } from 'zustand';
@@ -24,48 +25,65 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
       syncProducts: (freshProducts: Product[]) =>
         set((state) => ({
-          products: state.products.map((cartItem) => {
+          products: state.products.flatMap((cartItem) => {
             const updatedProduct = freshProducts.find(
-              (p) => p.id === cartItem.id
+              (product) => String(product.id) === String(cartItem.id)
             );
 
-            // Se o produto não existir mais no backend,
-            // mantém o item atual
-            if (!updatedProduct) return cartItem;
+            if (!updatedProduct) {
+              return [];
+            }
+
+            const stock =
+              typeof updatedProduct.stock === 'number'
+                ? updatedProduct.stock
+                : cartItem.quantity;
+
+            const availableQuantity = Math.min(cartItem.quantity, stock);
+
+            if (availableQuantity <= 0) {
+              return [];
+            }
 
             const updatedPrice = getUnitPrice(
-              updatedProduct.base_price,
-              cartItem.quantity,
+              Number(updatedProduct.base_price),
+              availableQuantity,
               updatedProduct.pricing_rules
             );
 
-            return {
-              ...cartItem,
-
-              // Dados atualizados do backend
-              title: updatedProduct.title,
-              image_url: updatedProduct.image_url,
-              base_price: Number(updatedProduct.base_price),
-              pricing_rules: updatedProduct.pricing_rules,
-
-              // Preço recalculado
-              price: updatedPrice,
-            };
+            return [
+              {
+                ...cartItem,
+                title: updatedProduct.title,
+                description: updatedProduct.description,
+                image_url: updatedProduct.image_url,
+                stock: updatedProduct.stock,
+                base_price: updatedProduct.base_price,
+                pricing_rules: updatedProduct.pricing_rules,
+                quantity: availableQuantity,
+                price: updatedPrice,
+              },
+            ];
           }),
         })),
 
       addToCart: (product) =>
         set((state) => {
-          const productId = product.id;
-
           const existingIndex = state.products.findIndex(
-            (item) => item.id === productId
+            (item) => item.id === product.id
           );
+
+          if (Number(product.stock) <= 0) {
+            return state;
+          }
 
           if (existingIndex !== -1) {
             const newProducts = [...state.products];
-
             const existingItem = newProducts[existingIndex];
+
+            if (existingItem.quantity >= product.stock) {
+              return state;
+            }
 
             const updatedQuantity = existingItem.quantity + 1;
 
@@ -77,9 +95,12 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
             newProducts[existingIndex] = {
               ...existingItem,
+              title: product.title,
+              image_url: product.image_url,
+              stock: product.stock,
               quantity: updatedQuantity,
               price: updatedPrice,
-              base_price: Number(product.base_price),
+              base_price: product.base_price,
               pricing_rules: product.pricing_rules,
             };
 
@@ -90,21 +111,17 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
           const initialQuantity = 1;
 
-          const initialPrice = getUnitPrice(
-            product.base_price,
-            initialQuantity,
-            product.pricing_rules
-          );
-
           return {
             products: [
               ...state.products,
               {
                 ...product,
-                id: productId,
                 quantity: initialQuantity,
-                base_price: Number(product.base_price),
-                price: initialPrice,
+                price: getUnitPrice(
+                  product.base_price,
+                  initialQuantity,
+                  product.pricing_rules
+                ),
               },
             ],
           };
@@ -113,7 +130,13 @@ export const useCartStore = create<CartStore & CartHydration>()(
       increase: (id) =>
         set((state) => ({
           products: state.products.map((item) => {
-            if (item.id !== id) return item;
+            if (item.id !== id) {
+              return item;
+            }
+
+            if (typeof item.stock === 'number' && item.quantity >= item.stock) {
+              return item;
+            }
 
             const updatedQuantity = item.quantity + 1;
 
@@ -133,25 +156,29 @@ export const useCartStore = create<CartStore & CartHydration>()(
 
       decrease: (id) =>
         set((state) => ({
-          products: state.products
-            .map((item) => {
-              if (item.id !== id) return item;
+          products: state.products.flatMap((item) => {
+            if (item.id !== id) {
+              return [item];
+            }
 
-              const updatedQuantity = item.quantity - 1;
+            if (item.quantity <= 1) {
+              return [];
+            }
 
-              const updatedPrice = getUnitPrice(
-                item.base_price,
-                updatedQuantity,
-                item.pricing_rules
-              );
+            const updatedQuantity = item.quantity - 1;
 
-              return {
+            return [
+              {
                 ...item,
                 quantity: updatedQuantity,
-                price: updatedPrice,
-              };
-            })
-            .filter((item) => item.quantity > 0),
+                price: getUnitPrice(
+                  item.base_price,
+                  updatedQuantity,
+                  item.pricing_rules
+                ),
+              },
+            ];
+          }),
         })),
 
       remove: (id) =>

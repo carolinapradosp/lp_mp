@@ -1,84 +1,40 @@
-import { neon } from '@neondatabase/serverless';
+// app/api/admin/orders/route.ts
 
-const sql = neon(process.env.DATABASE_URL_PRD!);
+import { NextResponse } from 'next/server';
+import { verifyAdminSession } from '@/lib/auth/admin-session';
+import { getOrdersFromDatabase } from '@/lib/orders/queries';
 
 export async function GET(request: Request) {
+  const isAuthenticated = await verifyAdminSession();
+
+  if (!isAuthenticated) {
+    return NextResponse.json(
+      {
+        error: 'Não autorizado',
+      },
+      {
+        status: 401,
+      }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
 
-    const orderId = searchParams.get('orderId') || '';
-
-    const cpf = searchParams.get('cpf') || '';
-
-    const email = searchParams.get('email') || '';
-    const status = searchParams.get('status') || '';
-
-    const totalOrdersResult = await sql`
-  SELECT COUNT(*) as total
-  FROM public.orders
-`;
-
-    const totalOrders = Number(totalOrdersResult[0].total);
-
-    /**
-     * Busca TODOS os pedidos
-     */
-    const orders = await sql`
-      SELECT
-        o.id,
-
-        o.customer_name,
-        o.customer_email,
-        o.customer_cpf,
-
-        o.total_amount,
-
-        o.payment_method,
-
-        o.status,
-
-        o.created_at,
-
-        o.mercadopago_external_id
-
-      FROM public.orders o
-
-      LEFT JOIN public.payments p
-        ON p.order_id = o.id
-
-      ORDER BY o.created_at DESC
-      LIMIT 50
-    `;
-
-    /**
-     * Filtro manual no Node
-     * Muito mais seguro/simples
-     */
-    const filteredOrders = orders.filter((order: any) => {
-      const matchId =
-        !orderId || order.id?.toLowerCase().includes(orderId.toLowerCase());
-
-      const matchCpf =
-        !cpf || order.customer_cpf?.toLowerCase().includes(cpf.toLowerCase());
-
-      const matchEmail =
-        !email ||
-        order.customer_email?.toLowerCase().includes(email.toLowerCase());
-
-      const matchStatus =
-        !status || order.status?.toLowerCase().includes(status.toLowerCase());
-
-      return matchId && matchCpf && matchEmail && matchStatus;
+    const result = await getOrdersFromDatabase({
+      orderId: searchParams.get('orderId') ?? '',
+      cpf: searchParams.get('cpf') ?? '',
+      email: searchParams.get('email') ?? '',
+      status: searchParams.get('status') ?? '',
+      limit: Number(searchParams.get('limit')) || 50,
+      offset: Number(searchParams.get('offset')) || 0,
     });
 
-    return Response.json({
-      orders: filteredOrders,
-      totalOrders,
-    });
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Erro ao buscar pedidos:', error);
 
-    return Response.json(
+    return NextResponse.json(
       {
         error: 'Erro ao buscar pedidos',
       },

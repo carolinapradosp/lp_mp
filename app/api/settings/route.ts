@@ -1,15 +1,11 @@
 // app/api/settings/route.ts
-import { NextResponse } from 'next/server';
-import { neon } from '@neondatabase/serverless';
 
-const sql = neon(process.env.DATABASE_URL_PRD!);
+import { NextResponse } from 'next/server';
+import { getPublicSettings } from '@/lib/settings/queries';
 
 export async function GET() {
   try {
-    const settings = await sql`
-      SELECT key, value
-      FROM system_settings
-    `;
+    const settings = await getPublicSettings();
 
     return NextResponse.json(settings);
   } catch (error) {
@@ -17,9 +13,11 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : 'Erro interno.',
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

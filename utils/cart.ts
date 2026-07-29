@@ -1,4 +1,5 @@
-import { PricingRule, Product } from '@/interfaces/Product';
+//utils/cart.ts
+import { PricingRule } from '@/interfaces/Product';
 
 export default function getUnitPrice(
   basePrice: number,

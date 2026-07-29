@@ -1,3 +1,5 @@
+//app/(store)/checkout/page.tsx
+
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -108,11 +110,89 @@ export default function Checkout() {
     amountRef.current = amount;
   }, [amount]);
 
+
+  const handlePaymentStatusChange = ({
+    status,
+    paymentId,
+    externalReference,
+    confirmationToken,
+    pixData,
+    errorMessage,
+  }: {
+    status: StatusPayment;
+    paymentId?: string;
+
+    externalReference?: string;
+    confirmationToken?: string;
+
+    pixData?: {
+      qrCode: string;
+      qrCodeBase64?: string;
+      expirationAt?: string | null;
+    };
+
+    errorMessage?: string;
+  }) => {
+    if (errorMessage) {
+      setPaymentError(errorMessage);
+
+      setPaymentBrickKey(
+        (currentKey) => currentKey + 1
+      );
+
+      return;
+    }
+
+    setPaymentError('');
+
+    if (!paymentId) {
+      setPaymentError(
+        'O pagamento foi processado, mas não retornou um identificador.'
+      );
+
+      return;
+    }
+
+    if (!externalReference) {
+      setPaymentError(
+        'O pedido foi criado sem uma referência válida.'
+      );
+
+      return;
+    }
+
+    if (!confirmationToken) {
+      setPaymentError(
+        'O pedido foi criado sem um token de confirmação.'
+      );
+
+      return;
+    }
+
+    setCheckoutData({
+      paymentId,
+      externalReference,
+      confirmationToken,
+      amount: amountRef.current,
+      status,
+      pixData,
+    });
+
+    router.push(
+      `/order-confirmation?token=${encodeURIComponent(
+        confirmationToken
+      )}`
+    );
+  };
+
   const isGlobalLoading =
     !hydrated ||
     loading ||
     loadingProducts ||
     !shippingLoaded;
+
+
+
 
   return (
     <>
@@ -189,18 +269,26 @@ export default function Checkout() {
                   <PaymentBrick
                     key={paymentBrickKey}
                     amount={amount}
-                    products={products}
-                    shippingCost={shippingCost}
-                    user={{
-                      orderId: crypto.randomUUID(),
-                      firstName: formData.name.split(' ')[0] || '',
-                      lastName: formData.name.split(' ').slice(1).join(' ') || '',
+                    products={products.map((product) => ({
+                      id: product.id,
+                      quantity: product.quantity,
+                    }))}
+                    customer={{
+                      firstName:
+                        formData.name.trim().split(/\s+/)[0] ?? '',
+                      lastName:
+                        formData.name
+                          .trim()
+                          .split(/\s+/)
+                          .slice(1)
+                          .join(' '),
                       email: formData.email,
                       cpf: formData.cpf,
                       phone: formData.phone,
                       address: {
                         zipCode: formData.cep,
-                        federalUnit: formData.state,
+                        federalUnit:
+                          formData.state.toUpperCase(),
                         city: formData.city,
                         neighborhood: formData.district,
                         streetName: formData.address,
@@ -209,43 +297,7 @@ export default function Checkout() {
                       },
                     }}
                     setLoading={setLoading}
-                    onStatusChange={({
-                      status,
-                      paymentId,
-                      pixData,
-                      errorMessage,
-                    }) => {
-                      setPaymentError('');
-
-                      if (errorMessage) {
-                        setPaymentError(errorMessage);
-                        setPaymentBrickKey((prev) => prev + 1);
-                        return;
-                      }
-
-                      if (!paymentId) return;
-
-                      console.log('teste-->', {
-                        amount,
-                        shippingCost,
-                        subtotal,
-                      });
-
-                      setCheckoutData({
-                        paymentId,
-                        amount: amountRef.current,
-                        status: status as StatusPayment,
-                        pixData:
-                          pixData?.qrCode && pixData?.qrCodeBase64
-                            ? {
-                              qrCode: pixData.qrCode,
-                              qrCodeBase64: pixData.qrCodeBase64,
-                            }
-                            : undefined,
-                      });
-
-                      router.push(`/order-confirmation?paymentId=${paymentId}`);
-                    }}
+                    onStatusChange={handlePaymentStatusChange}
                   />
                 )}
               </div>

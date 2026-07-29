@@ -1,69 +1,65 @@
 import Image from 'next/image';
 import { useCartStore } from '@/store/cartStore';
-import { ProductsProps } from '@/interfaces/Product';
 import getUnitPrice from '@/utils/cart';
 import { formatCurrency } from '@/utils/utils';
+import { ProductsProps } from '@/interfaces/Product';
 
 type SingleProduct = ProductsProps['products'][number];
-
-export default function Products({ products }: ProductsProps) {
-    return (
-        <section className="relative overflow-hidden bg-[var(--color-brand-bg)] text-[var(--color-brand-dark)]">
-            <div className="mx-auto w-full max-w-480 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-24">
-
-                {/* HEADER */}
-                <div className="mb-16 text-center">
-                    <span className="inline-flex text-[11px] font-bold uppercase tracking-[0.25em] text-[var(--color-brand-muted)]">
-                        Produtos em destaque
-                    </span>
-
-                    <h2 className="mt-3 text-3xl font-light tracking-tight sm:text-4xl lg:text-5xl">
-                        Vender ficou <span className="font-medium">muito mais fácil</span>
-                    </h2>
-
-                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[var(--color-brand-muted)]">
-                        Sua vitrine digital pronta para atrair clientes, gerar pedidos e impulsionar o crescimento do seu negócio.
-                    </p>
-                </div>
-
-                {/* GRID */}
-                <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                    {products.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-}
 
 interface ProductCardProps {
     product: SingleProduct;
 }
 
-function ProductCard({ product }: ProductCardProps) {
-    const { products: cartProducts, addToCart } = useCartStore();
+export default function ProductCard({ product }: ProductCardProps) {
+    const cartItem = useCartStore((state) =>
+        state.products.find(
+            (item) =>
+                String(item.id) === String(product.id),
+        ),
+    );
 
-    const cartItem = cartProducts.find((item) => String(item.id) === String(product.id));
-    const currentQuantity = cartItem?.quantity || 1;
+    const addToCart = useCartStore(
+        (state) => state.addToCart,
+    );
 
-    const unitPrice = getUnitPrice(product.base_price, currentQuantity, product.pricing_rules);
+    const currentQuantity =
+        cartItem?.quantity ?? 1;
+
+    const unitPrice = getUnitPrice(
+        product.base_price,
+        currentQuantity,
+        product.pricing_rules,
+    );
+
     const total = currentQuantity * unitPrice;
-    const hasDiscount = unitPrice < product.base_price;
 
-    const handleAddToCart = () => {
+    const hasDiscount =
+        unitPrice < Number(product.base_price);
+
+    function handleAddToCart() {
+        if (isOutOfStock) {
+            return;
+        }
+
         addToCart({
             id: product.id,
             title: product.title,
-            price: unitPrice,
+            description: product.description,
             base_price: product.base_price,
-            quantity: 1,
             image_url: product.image_url,
+            stock: product.stock,
             pricing_rules: product.pricing_rules,
         });
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    }
+
+
+
+    const isOutOfStock = Number(product.stock) <= 0;
 
     return (
         <article className="group flex h-full flex-col bg-[var(--color-brand-bg)] transition-all duration-300">
@@ -127,10 +123,27 @@ function ProductCard({ product }: ProductCardProps) {
                 {/* BOTÃO COMPRAR - Estilo Flat Minimalista */}
                 <div className="mt-auto">
                     <button
+                        type="button"
+                        disabled={isOutOfStock}
                         onClick={handleAddToCart}
-                        className="flex h-11 w-full items-center justify-center border border-[var(--color-brand-dark)] bg-[var(--color-brand-dark)] text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-bg)] transition-all duration-200 hover:bg-transparent hover:text-[var(--color-brand-dark)] cursor-pointer"
+                        className="
+    flex h-11 w-full items-center justify-center
+    border border-[var(--color-brand-dark)]
+    bg-[var(--color-brand-dark)]
+    text-xs font-semibold uppercase tracking-widest
+    text-[var(--color-brand-bg)]
+    transition-all duration-200
+    hover:bg-transparent
+    hover:text-[var(--color-brand-dark)]
+    disabled:cursor-not-allowed
+    disabled:opacity-40
+    disabled:hover:bg-[var(--color-brand-dark)]
+    disabled:hover:text-[var(--color-brand-bg)]
+  "
                     >
-                        Adicionar
+                        {isOutOfStock
+                            ? 'Indisponível'
+                            : 'Adicionar'}
                     </button>
                 </div>
             </div>

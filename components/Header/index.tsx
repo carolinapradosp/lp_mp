@@ -1,18 +1,13 @@
+//components/Header/index.tsx
 'use client';
 
-import Image from "next/image";
 import MiniCart from "../Minicart";
-import logo from '@/public/logo.jpg';
-import { useCartStore } from "@/store/cartStore";
-import Link from "next/link";
 import Logo from "../Logo/Logo";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-    const { products: cartProducts } = useCartStore();
-
-    const isHomepage =
-        typeof window !== 'undefined' &&
-        window.location.pathname === '/';
+    const pathname = usePathname();
+    const isHomepage = pathname === '/';
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-brand-border bg-white/80 backdrop-blur-md transition-all">
@@ -47,7 +42,7 @@ export default function Header() {
                     {/* Carrinho */}
                     {isHomepage && (
                         <div className="relative">
-                            <MiniCart products={cartProducts} />
+                            <MiniCart />
                         </div>
                     )}
                 </div>

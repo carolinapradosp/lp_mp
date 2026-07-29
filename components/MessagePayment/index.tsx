@@ -8,11 +8,12 @@ import { Check, Clock, AlertTriangle } from 'lucide-react';
 
 interface PaymentTypeProps {
   type: StatusPayment;
-  orderId: any;
+  orderId: string;
   amount: number;
   pixData?: {
     qrCode: string;
-    qrCodeBase64: string;
+    qrCodeBase64?: string;
+    expirationAt?: string | null;
   } | null;
   copied: boolean;
   errorMessage?: string;
@@ -92,7 +93,7 @@ export default function MessagePayment({
               />
             ) : (
               <div className="h-[200px] w-[200px] bg-neutral-50 flex items-center justify-center text-xs text-[var(--color-brand-muted)]">
-                Carregando QR Code...
+                QR Code indisponível.
               </div>
             )}
           </div>

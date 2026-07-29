@@ -1,3 +1,4 @@
+// components/ResumoPagamento/index.tsx
 import { formatCurrency } from "@/utils/utils";
 import {
     ShieldCheck,
