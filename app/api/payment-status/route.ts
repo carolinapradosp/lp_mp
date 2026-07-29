@@ -1,15 +1,24 @@
 // app/api/payment-status/route.ts
 
-import { NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { NextResponse } from 'next/server';
+
 import { syncPaymentStatus } from '@/lib/mercadopago/sync-payment-status';
 
-const sql = neon(process.env.DATABASE_URL_PRD!);
+const databaseUrl = process.env.DATABASE_URL_PRD ?? process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL_PRD ou DATABASE_URL não configurada.');
+}
+
+const sql = neon(databaseUrl);
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+
     const paymentId = searchParams.get('paymentId');
+
     console.log('🟡 paymentId:', paymentId);
 
     if (!paymentId) {
@@ -24,25 +33,29 @@ export async function GET(request: Request) {
       );
     }
 
-    // SINCRONIZA COM MP
-    await syncPaymentStatus(paymentId);
+    const syncResult = await syncPaymentStatus(paymentId);
 
-    // BUSCA STATUS ATUALIZADO
+    if (!syncResult.success) {
+      console.error('❌ Falha ao sincronizar pagamento:', syncResult.reason);
+    }
+
     const paymentResult = await sql`
-      SELECT *
-      FROM public.payments
-      WHERE mercadopago_payment_id = ${paymentId}
-      LIMIT 1
-    `;
+        SELECT
+          status
+        FROM public.payments
+        WHERE mercadopago_payment_id = ${paymentId}
+        LIMIT 1
+      `;
 
     const payment = paymentResult[0];
 
     if (!payment) {
-      console.error('❌ Payment não encontrado');
+      console.error('❌ Pagamento não encontrado');
 
       return NextResponse.json(
         {
           status: 'pending',
+          error: 'PAYMENT_NOT_FOUND',
         },
         {
           status: 404,
@@ -55,8 +68,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       status: payment.status,
     });
-  } catch (err) {
-    console.error('❌ Erro payment-status:', err);
+  } catch (error) {
+    console.error('❌ Erro payment-status:', error);
 
     return NextResponse.json(
       {

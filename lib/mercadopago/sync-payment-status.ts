@@ -2,6 +2,7 @@
 
 import { dbPool } from '@/lib/db';
 import { pusherServer } from '@/lib/pusher-server';
+
 import { mercadoPagoPayment } from './client';
 
 import {
@@ -68,6 +69,7 @@ export async function syncPaymentStatus(
     }
 
     const statusMP = rawStatus;
+
     const client = await dbPool.connect();
 
     let transactionResult: TransactionResult;
@@ -125,15 +127,25 @@ export async function syncPaymentStatus(
           const becameRefunded =
             !isRefundLikeStatus(currentStatus) && isRefundLikeStatus(statusMP);
 
+          /*
+           * IMPORTANTE:
+           *
+           * status e mercadopago_status possuem
+           * tipos diferentes no PostgreSQL.
+           *
+           * Por isso não podemos reutilizar
+           * o mesmo placeholder para as duas
+           * colunas.
+           */
           await client.query(
             `
               UPDATE public.payments
               SET
                 status = $1,
-                mercadopago_status = $1,
+                mercadopago_status = $2,
                 paid_at =
                   CASE
-                    WHEN $1 = 'approved'
+                    WHEN $3 = 'approved'
                     THEN COALESCE(
                       paid_at,
                       NOW()
@@ -141,9 +153,9 @@ export async function syncPaymentStatus(
                     ELSE paid_at
                   END,
                 updated_at = NOW()
-              WHERE id = $2
+              WHERE id = $4
             `,
-            [statusMP, paymentRecord.id]
+            [statusMP, statusMP, statusMP, paymentRecord.id]
           );
 
           await client.query(
@@ -225,7 +237,15 @@ export async function syncPaymentStatus(
         }
       }
     } catch (error) {
-      await client.query('ROLLBACK');
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        console.error(
+          'Erro ao realizar rollback da sincronização:',
+          rollbackError
+        );
+      }
+
       throw error;
     } finally {
       client.release();
@@ -243,6 +263,13 @@ export async function syncPaymentStatus(
       };
     }
 
+    /*
+     * Envia o evento mesmo quando o banco
+     * já possuía esse status.
+     *
+     * Isso permite que uma tela aberta
+     * receba novamente o estado atual.
+     */
     try {
       await pusherServer.trigger(
         `payment-${mercadopagoPaymentId}`,
@@ -253,6 +280,13 @@ export async function syncPaymentStatus(
         }
       );
     } catch (error) {
+      /*
+       * Falha no Pusher não desfaz a
+       * atualização do banco.
+       *
+       * O polling da tela continuará
+       * funcionando como fallback.
+       */
       console.error('Erro ao enviar evento Pusher:', error);
     }
 
