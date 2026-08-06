@@ -2,18 +2,26 @@
 
 'use client';
 
-import { useActionState, useState } from 'react';
+import Link from 'next/link';
+import {
+    useActionState,
+    useRef,
+    useState,
+} from 'react';
 
 import {
     createProduct,
     type ProductFormState,
+    updateProduct,
 } from '@/app/admin/(protected)/products/actions';
 
-import type { PricingRule } from '@/interfaces/Product';
+import type {
+    AdminProduct,
+    PricingRule,
+} from '@/interfaces/Product';
 
-const initialState: ProductFormState = {
-    success: false,
-    message: '',
+type ProductFormProps = {
+    product?: AdminProduct;
 };
 
 type PricingRuleForm = {
@@ -22,37 +30,91 @@ type PricingRuleForm = {
     unit_price: string;
 };
 
-function createEmptyPricingRule(): PricingRuleForm {
-    return {
-        id: crypto.randomUUID(),
-        min_quantity: '',
-        unit_price: '',
-    };
+const initialState: ProductFormState = {
+    success: false,
+    message: '',
+};
+
+function formatCurrencyInput(value: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value);
 }
 
-function currencyStringToNumber(value: string): number {
-    const normalizedValue = value
+function parseCurrencyInput(value: string): number {
+    const originalValue = value
         .trim()
-        .replace(/\./g, '')
-        .replace(',', '.');
+        .replace(/\s/g, '');
 
-    return Number(normalizedValue);
+    if (!originalValue) {
+        return Number.NaN;
+    }
+
+    if (
+        originalValue.includes('.') &&
+        originalValue.includes(',')
+    ) {
+        return Number(
+            originalValue
+                .replace(/\./g, '')
+                .replace(',', '.'),
+        );
+    }
+
+    if (originalValue.includes(',')) {
+        return Number(originalValue.replace(',', '.'));
+    }
+
+    return Number(originalValue);
 }
 
-export default function ProductForm() {
+function createInitialRules(
+    product?: AdminProduct,
+): PricingRuleForm[] {
+    return (
+        product?.pricing_rules.map((rule, index) => ({
+            id: `existing-rule-${index}`,
+            min_quantity: String(rule.min_quantity),
+            unit_price: formatCurrencyInput(
+                rule.unit_price,
+            ),
+        })) ?? []
+    );
+}
+
+export default function ProductForm({
+    product,
+}: ProductFormProps) {
+    const isEditing = Boolean(product);
+
+    const productAction = isEditing
+        ? updateProduct
+        : createProduct;
+
     const [state, formAction, pending] = useActionState(
-        createProduct,
+        productAction,
         initialState,
+    );
+
+    const nextRuleId = useRef(
+        product?.pricing_rules.length ?? 0,
     );
 
     const [pricingRules, setPricingRules] = useState<
         PricingRuleForm[]
-    >([]);
+    >(() => createInitialRules(product));
 
     function addPricingRule(): void {
+        nextRuleId.current += 1;
+
         setPricingRules((currentRules) => [
             ...currentRules,
-            createEmptyPricingRule(),
+            {
+                id: `new-rule-${nextRuleId.current}`,
+                min_quantity: '',
+                unit_price: '',
+            },
         ]);
     }
 
@@ -89,8 +151,11 @@ export default function ProductForm() {
                     rule.unit_price.trim() !== '',
             )
             .map((rule) => ({
-                min_quantity: Number(rule.min_quantity),
-                unit_price: currencyStringToNumber(
+                min_quantity: Number(
+                    rule.min_quantity,
+                ),
+
+                unit_price: parseCurrencyInput(
                     rule.unit_price,
                 ),
             }));
@@ -100,10 +165,20 @@ export default function ProductForm() {
             action={formAction}
             className="rounded-xl border border-slate-200 bg-white p-6"
         >
+            {product && (
+                <input
+                    type="hidden"
+                    name="product_id"
+                    value={product.id}
+                />
+            )}
+
             <input
                 type="hidden"
                 name="pricing_rules"
-                value={JSON.stringify(normalizedPricingRules)}
+                value={JSON.stringify(
+                    normalizedPricingRules,
+                )}
             />
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -119,6 +194,7 @@ export default function ProductForm() {
                         id="title"
                         name="title"
                         type="text"
+                        defaultValue={product?.title ?? ''}
                         required
                         className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                     />
@@ -142,8 +218,17 @@ export default function ProductForm() {
                         id="description"
                         name="description"
                         rows={4}
+                        defaultValue={
+                            product?.description ?? ''
+                        }
                         className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-700"
                     />
+
+                    {state.errors?.description && (
+                        <p className="mt-1 text-sm text-red-600">
+                            {state.errors.description}
+                        </p>
+                    )}
                 </div>
 
                 <div>
@@ -159,6 +244,13 @@ export default function ProductForm() {
                         name="base_price"
                         type="text"
                         inputMode="decimal"
+                        defaultValue={
+                            product
+                                ? formatCurrencyInput(
+                                    product.base_price,
+                                )
+                                : ''
+                        }
                         placeholder="1.149,90"
                         required
                         className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
@@ -185,7 +277,7 @@ export default function ProductForm() {
                         type="number"
                         min="0"
                         step="1"
-                        defaultValue="0"
+                        defaultValue={product?.stock ?? 0}
                         required
                         className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                     />
@@ -209,6 +301,7 @@ export default function ProductForm() {
                         id="image_url"
                         name="image_url"
                         type="url"
+                        defaultValue={product?.image_url ?? ''}
                         placeholder="https://..."
                         className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                     />
@@ -225,7 +318,9 @@ export default function ProductForm() {
                         <input
                             name="active"
                             type="checkbox"
-                            defaultChecked
+                            defaultChecked={
+                                product?.active ?? true
+                            }
                             className="size-4 rounded border-slate-300"
                         />
 
@@ -244,8 +339,8 @@ export default function ProductForm() {
                         </h2>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Defina preços diferentes de acordo
-                            com a quantidade comprada.
+                            Defina preços diferentes conforme a
+                            quantidade comprada.
                         </p>
                     </div>
 
@@ -273,14 +368,14 @@ export default function ProductForm() {
                             >
                                 <div>
                                     <label
-                                        htmlFor={`min_quantity_${rule.id}`}
+                                        htmlFor={`min-quantity-${rule.id}`}
                                         className="mb-2 block text-sm font-medium text-slate-700"
                                     >
                                         Quantidade mínima
                                     </label>
 
                                     <input
-                                        id={`min_quantity_${rule.id}`}
+                                        id={`min-quantity-${rule.id}`}
                                         type="number"
                                         min="2"
                                         step="1"
@@ -296,20 +391,21 @@ export default function ProductForm() {
                                             )
                                         }
                                         placeholder="2"
+                                        required
                                         className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                                     />
                                 </div>
 
                                 <div>
                                     <label
-                                        htmlFor={`unit_price_${rule.id}`}
+                                        htmlFor={`unit-price-${rule.id}`}
                                         className="mb-2 block text-sm font-medium text-slate-700"
                                     >
                                         Preço unitário
                                     </label>
 
                                     <input
-                                        id={`unit_price_${rule.id}`}
+                                        id={`unit-price-${rule.id}`}
                                         type="text"
                                         inputMode="decimal"
                                         value={rule.unit_price}
@@ -322,6 +418,7 @@ export default function ProductForm() {
                                             )
                                         }
                                         placeholder="1.099,00"
+                                        required
                                         className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                                     />
                                 </div>
@@ -357,7 +454,14 @@ export default function ProductForm() {
                 </div>
             )}
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <Link
+                    href="/admin/products"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                    Cancelar
+                </Link>
+
                 <button
                     type="submit"
                     disabled={pending}
@@ -365,7 +469,9 @@ export default function ProductForm() {
                 >
                     {pending
                         ? 'Salvando...'
-                        : 'Cadastrar produto'}
+                        : isEditing
+                            ? 'Salvar alterações'
+                            : 'Cadastrar produto'}
                 </button>
             </div>
         </form>

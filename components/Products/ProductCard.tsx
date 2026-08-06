@@ -65,14 +65,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <article className="group flex h-full flex-col bg-[var(--color-brand-bg)] transition-all duration-300">
 
             {/* IMAGEM - Container limpo com bordas finas */}
-            <div className="relative flex aspect-square items-center justify-center overflow-hidden border border-[var(--color-brand-border)] bg-white p-6 transition-colors duration-300 group-hover:border-[var(--color-brand-bg)]">
+            <div className={`relative flex aspect-square items-center justify-center overflow-hidden border border-[var(--color-brand-border)]  p-6 transition-colors duration-300 group-hover:border-[var(--color-brand-bg)] ${product.image_url ? 'bg-white' : 'bg-gray-200'}`}>
                 {hasDiscount && (
                     <div className="absolute left-3 top-3 z-20 border border-[var(--color-brand-accent)] bg-[var(--color-brand-bg)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand-accent)]">
                         Oferta
                     </div>
                 )}
 
-                {product.image_url && (
+                {product.image_url ? (
                     <Image
                         src={product.image_url}
                         alt={product.title}
@@ -80,7 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                         height={220}
                         className="h-auto max-h-48 w-auto max-w-full object-contain transition-transform duration-500 group-hover:scale-102"
                     />
-                )}
+                ) : <div className='font-black text-xl text-center'>Imagem <br />Indisponível</div>}
             </div>
 
             {/* CONTEÚDO */}
@@ -147,6 +147,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </button>
                 </div>
             </div>
-        </article>
+        </article >
     );
 }

@@ -5,10 +5,9 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import type { PricingRule } from '@/interfaces/Product';
 import { verifyAdminSession } from '@/lib/auth/admin-session';
 import { sql } from '@/lib/database/neon';
-
-import type { PricingRule } from '@/interfaces/Product';
 
 export type ProductFormErrors = {
   title?: string;
@@ -29,14 +28,51 @@ type CreatedProductRow = {
   id: string;
 };
 
-function parseCurrency(value: FormDataEntryValue | null): number {
-  const normalizedValue = String(value ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.');
+type ExistingProductRow = {
+  id: string;
+};
 
-  return Number(normalizedValue);
+type ParsedProductFormData = {
+  productId: string;
+  title: string;
+  description: string;
+  basePrice: number;
+  imageUrl: string;
+  stock: number;
+  active: boolean;
+  pricingRules: PricingRule[];
+};
+
+function parseCurrency(value: FormDataEntryValue | null): number {
+  const originalValue = String(value ?? '')
+    .trim()
+    .replace(/\s/g, '');
+
+  if (!originalValue) {
+    return Number.NaN;
+  }
+
+  /*
+   * Formato brasileiro:
+   * 1.149,90 -> 1149.90
+   */
+  if (originalValue.includes('.') && originalValue.includes(',')) {
+    return Number(originalValue.replace(/\./g, '').replace(',', '.'));
+  }
+
+  /*
+   * Apenas vírgula:
+   * 1149,90 -> 1149.90
+   */
+  if (originalValue.includes(',')) {
+    return Number(originalValue.replace(',', '.'));
+  }
+
+  /*
+   * Apenas ponto:
+   * 1149.90 -> 1149.90
+   */
+  return Number(originalValue);
 }
 
 function parsePricingRules(value: FormDataEntryValue | null): PricingRule[] {
@@ -52,7 +88,7 @@ function parsePricingRules(value: FormDataEntryValue | null): PricingRule[] {
     }
 
     return parsedValue
-      .map((rule) => {
+      .map((rule): PricingRule | null => {
         if (
           typeof rule !== 'object' ||
           rule === null ||
@@ -63,6 +99,7 @@ function parsePricingRules(value: FormDataEntryValue | null): PricingRule[] {
         }
 
         const minQuantity = Number(rule.min_quantity);
+
         const unitPrice = Number(rule.unit_price);
 
         if (
@@ -79,16 +116,120 @@ function parsePricingRules(value: FormDataEntryValue | null): PricingRule[] {
           unit_price: unitPrice,
         };
       })
-      .filter((rule): rule is PricingRule => rule !== null);
+      .filter((rule): rule is PricingRule => rule !== null)
+      .sort(
+        (firstRule, secondRule) =>
+          firstRule.min_quantity - secondRule.min_quantity
+      );
   } catch {
     return [];
   }
 }
 
-function hasDuplicatedQuantities(pricingRules: PricingRule[]): boolean {
+function getProductFormData(formData: FormData): ParsedProductFormData {
+  return {
+    productId: String(formData.get('product_id') ?? '').trim(),
+
+    title: String(formData.get('title') ?? '').trim(),
+
+    description: String(formData.get('description') ?? '').trim(),
+
+    basePrice: parseCurrency(formData.get('base_price')),
+
+    imageUrl: String(formData.get('image_url') ?? '').trim(),
+
+    stock: Number(formData.get('stock')),
+
+    active: formData.get('active') === 'on',
+
+    pricingRules: parsePricingRules(formData.get('pricing_rules')),
+  };
+}
+
+function validateProductData({
+  title,
+  basePrice,
+  imageUrl,
+  stock,
+  pricingRules,
+}: ParsedProductFormData): ProductFormErrors {
+  const errors: ProductFormErrors = {};
+
+  if (!title) {
+    errors.title = 'Informe o nome do produto.';
+  }
+
+  if (!Number.isFinite(basePrice) || basePrice <= 0) {
+    errors.base_price = 'Informe um preço válido.';
+  }
+
+  if (!Number.isInteger(stock) || stock < 0) {
+    errors.stock = 'Informe uma quantidade de estoque válida.';
+  }
+
+  if (imageUrl) {
+    try {
+      new URL(imageUrl);
+    } catch {
+      errors.image_url = 'Informe uma URL de imagem válida.';
+    }
+  }
+
   const quantities = pricingRules.map((rule) => rule.min_quantity);
 
-  return new Set(quantities).size !== quantities.length;
+  const hasDuplicatedQuantities =
+    new Set(quantities).size !== quantities.length;
+
+  if (hasDuplicatedQuantities) {
+    errors.pricing_rules = 'Não repita a mesma quantidade mínima.';
+  }
+
+  const hasPriceGreaterThanBase = pricingRules.some(
+    (rule) => rule.unit_price >= basePrice
+  );
+
+  if (hasPriceGreaterThanBase) {
+    errors.pricing_rules =
+      'O preço progressivo deve ser menor que o preço base.';
+  }
+
+  for (let index = 1; index < pricingRules.length; index += 1) {
+    const previousRule = pricingRules[index - 1];
+    const currentRule = pricingRules[index];
+
+    if (currentRule.unit_price >= previousRule.unit_price) {
+      errors.pricing_rules =
+        'O preço unitário deve diminuir conforme a quantidade aumenta.';
+
+      break;
+    }
+  }
+
+  return errors;
+}
+
+async function insertPricingRules(
+  productId: string,
+  pricingRules: PricingRule[]
+): Promise<void> {
+  for (const rule of pricingRules) {
+    await sql`
+            INSERT INTO public.product_pricing_rules (
+                product_id,
+                min_quantity,
+                unit_price,
+                active,
+                created_at
+            )
+            VALUES (
+                ${productId},
+                ${rule.min_quantity},
+                ${rule.unit_price},
+                true,
+                NOW()
+            )
+        `;
+  }
 }
 
 export async function createProduct(
@@ -106,54 +247,8 @@ export async function createProduct(
     };
   }
 
-  const title = String(formData.get('title') ?? '').trim();
-
-  const description = String(formData.get('description') ?? '').trim();
-
-  const imageUrl = String(formData.get('image_url') ?? '').trim();
-
-  const basePrice = parseCurrency(formData.get('base_price'));
-
-  const stock = Number(formData.get('stock'));
-
-  const active = formData.get('active') === 'on';
-
-  const pricingRules = parsePricingRules(formData.get('pricing_rules'));
-
-  const errors: ProductFormErrors = {};
-
-  if (!title) {
-    errors.title = 'Informe o nome do produto.';
-  }
-
-  if (!Number.isFinite(basePrice) || basePrice <= 0) {
-    errors.base_price = 'Informe um preço válido.';
-  }
-
-  if (!Number.isInteger(stock) || stock < 0) {
-    errors.stock = 'Informe um estoque válido.';
-  }
-
-  if (imageUrl) {
-    try {
-      new URL(imageUrl);
-    } catch {
-      errors.image_url = 'Informe uma URL válida.';
-    }
-  }
-
-  if (hasDuplicatedQuantities(pricingRules)) {
-    errors.pricing_rules = 'Não repita a mesma quantidade mínima.';
-  }
-
-  const hasInvalidPricingRule = pricingRules.some(
-    (rule) => rule.unit_price >= basePrice
-  );
-
-  if (hasInvalidPricingRule) {
-    errors.pricing_rules =
-      'O preço progressivo deve ser menor que o preço base.';
-  }
+  const productData = getProductFormData(formData);
+  const errors = validateProductData(productData);
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -163,7 +258,7 @@ export async function createProduct(
     };
   }
 
-  let productId: string | null = null;
+  let createdProductId: string | null = null;
 
   try {
     const createdProducts = await sql`
@@ -178,63 +273,45 @@ export async function createProduct(
                 updated_at
             )
             VALUES (
-                ${title},
-                ${description || null},
-                ${basePrice},
-                ${imageUrl || null},
-                ${stock},
-                ${active},
+                ${productData.title},
+                ${productData.description || null},
+                ${productData.basePrice},
+                ${productData.imageUrl || null},
+                ${productData.stock},
+                ${productData.active},
                 NOW(),
                 NOW()
             )
             RETURNING id
         `;
 
-    productId = (createdProducts as CreatedProductRow[])[0]?.id;
+    createdProductId = (createdProducts as CreatedProductRow[])[0]?.id;
 
-    if (!productId) {
+    if (!createdProductId) {
       throw new Error('O banco não retornou o ID do produto.');
     }
 
-    const sortedPricingRules = [...pricingRules].sort(
-      (firstRule, secondRule) =>
-        firstRule.min_quantity - secondRule.min_quantity
-    );
-
-    for (const rule of sortedPricingRules) {
-      await sql`
-                INSERT INTO public.product_pricing_rules (
-                    product_id,
-                    min_quantity,
-                    unit_price,
-                    active,
-                    created_at
-                )
-                VALUES (
-                    ${productId},
-                    ${rule.min_quantity},
-                    ${rule.unit_price},
-                    true,
-                    NOW()
-                )
-            `;
-    }
+    await insertPricingRules(createdProductId, productData.pricingRules);
   } catch (error) {
     console.error('Erro ao cadastrar produto:', error);
 
-    if (productId) {
+    /*
+     * Remove o produto caso alguma regra tenha falhado
+     * durante o cadastro.
+     */
+    if (createdProductId) {
       try {
         await sql`
                     DELETE FROM public.product_pricing_rules
-                    WHERE product_id = ${productId}
+                    WHERE product_id = ${createdProductId}
                 `;
 
         await sql`
                     DELETE FROM public.products
-                    WHERE id = ${productId}
+                    WHERE id = ${createdProductId}
                 `;
       } catch (rollbackError) {
-        console.error('Erro ao desfazer cadastro do produto:', rollbackError);
+        console.error('Erro ao desfazer cadastro:', rollbackError);
       }
     }
 
@@ -250,6 +327,97 @@ export async function createProduct(
   redirect('/admin/products');
 }
 
+export async function updateProduct(
+  previousState: ProductFormState,
+  formData: FormData
+): Promise<ProductFormState> {
+  void previousState;
+
+  const isAuthenticated = await verifyAdminSession();
+
+  if (!isAuthenticated) {
+    return {
+      success: false,
+      message: 'Você não tem permissão para editar produtos.',
+    };
+  }
+
+  const productData = getProductFormData(formData);
+
+  if (!productData.productId) {
+    return {
+      success: false,
+      message: 'Produto não identificado.',
+    };
+  }
+
+  const errors = validateProductData(productData);
+
+  if (Object.keys(errors).length > 0) {
+    return {
+      success: false,
+      message: 'Verifique os campos do formulário.',
+      errors,
+    };
+  }
+
+  try {
+    const existingProducts = await sql`
+            SELECT id
+            FROM public.products
+            WHERE id = ${productData.productId}
+            LIMIT 1
+        `;
+
+    const existingProduct = (existingProducts as ExistingProductRow[])[0];
+
+    if (!existingProduct) {
+      return {
+        success: false,
+        message: 'Produto não encontrado.',
+      };
+    }
+
+    await sql`
+            UPDATE public.products
+            SET
+                title = ${productData.title},
+                description = ${productData.description || null},
+                base_price = ${productData.basePrice},
+                image_url = ${productData.imageUrl || null},
+                stock = ${productData.stock},
+                active = ${productData.active},
+                updated_at = NOW()
+            WHERE id = ${productData.productId}
+        `;
+
+    /*
+     * As regras enviadas pelo formulário passam a ser
+     * a versão atual das regras do produto.
+     */
+    await sql`
+            DELETE FROM public.product_pricing_rules
+            WHERE product_id = ${productData.productId}
+        `;
+
+    await insertPricingRules(productData.productId, productData.pricingRules);
+  } catch (error) {
+    console.error('Erro ao atualizar produto:', error);
+
+    return {
+      success: false,
+      message: 'Não foi possível atualizar o produto. Tente novamente.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/admin/products');
+
+  revalidatePath(`/admin/products/${productData.productId}/edit`);
+
+  redirect('/admin/products');
+}
+
 export async function toggleProductStatus(formData: FormData): Promise<void> {
   const isAuthenticated = await verifyAdminSession();
 
@@ -257,7 +425,7 @@ export async function toggleProductStatus(formData: FormData): Promise<void> {
     redirect('/admin');
   }
 
-  const productId = String(formData.get('product_id') ?? '');
+  const productId = String(formData.get('product_id') ?? '').trim();
 
   const currentStatus = formData.get('current_status') === 'true';
 
@@ -273,10 +441,12 @@ export async function toggleProductStatus(formData: FormData): Promise<void> {
                 updated_at = NOW()
             WHERE id = ${productId}
         `;
-
-    revalidatePath('/');
-    revalidatePath('/admin/products');
   } catch (error) {
     console.error('Erro ao alterar status do produto:', error);
+
+    return;
   }
+
+  revalidatePath('/');
+  revalidatePath('/admin/products');
 }
