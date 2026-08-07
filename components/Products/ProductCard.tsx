@@ -65,7 +65,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <article className="group flex h-full flex-col bg-[var(--color-brand-bg)] transition-all duration-300">
 
             {/* IMAGEM - Container limpo com bordas finas */}
-            <div className={`relative flex aspect-square items-center justify-center overflow-hidden border border-[var(--color-brand-border)]  p-6 transition-colors duration-300 group-hover:border-[var(--color-brand-bg)] ${product.image_url ? 'bg-white' : 'bg-gray-200'}`}>
+            <div className={`relative flex aspect-square items-center justify-center overflow-hidden border border-brand-border  p-6 transition-colors duration-300 group-hover:border-[var(--color-brand-bg)] ${product.image_url ? 'bg-white' : 'bg-gray-100'}`}>
                 {hasDiscount && (
                     <div className="absolute left-3 top-3 z-20 border border-[var(--color-brand-accent)] bg-[var(--color-brand-bg)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand-accent)]">
                         Oferta
@@ -110,7 +110,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
                 {/* REGRAS DE NEGÓCIO / TOTAIS MULTI-UNIDADE */}
                 {currentQuantity > 1 && (
-                    <div className="mb-4 border-t border-dashed border-[var(--color-brand-border)] pt-3 flex justify-between items-center text-xs">
+                    <div className="mb-4 border-t border-dashed border-brand-border pt-3 flex justify-between items-center text-xs">
                         <span className="text-[var(--color-brand-muted)]">
                             {currentQuantity}x unidades (Total)
                         </span>

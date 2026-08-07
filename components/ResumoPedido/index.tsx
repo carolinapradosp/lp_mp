@@ -11,7 +11,7 @@ export default function ResumoPedido() {
         <div className="w-full">
 
             {/* HEADER INTERNO */}
-            <div className="mb-6 flex items-center justify-between border-b border-[var(--color-brand-border)] pb-4">
+            <div className="mb-6 flex items-center justify-between border-b border-brand-border pb-4">
                 <h2 className="text-xl font-medium tracking-tight text-[var(--color-brand-dark)]">
                     Seu pedido
                 </h2>
@@ -29,8 +29,8 @@ export default function ResumoPedido() {
                         className="group flex flex-row items-center gap-4 py-4 bg-transparent transition-colors duration-200"
                     >
                         {/* WRAPPER DA IMAGEM - Minimalista com borda fina */}
-                        <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-[var(--color-brand-border)] bg-white p-2 transition-colors duration-300 group-hover:border-[var(--color-brand-dark)]">
-                            {product.image_url && (
+                        <div className={`flex h-16 w-16 shrink-0 items-center justify-center border border-brand-border p-2 transition-colors duration-300 group-hover:border-[var(--color-brand-dark)] ${product.image_url ? "bg-white" : "bg-gray-100"}`}>
+                            {product.image_url ? (
                                 <Image
                                     src={product.image_url}
                                     alt={product.title}
@@ -38,7 +38,7 @@ export default function ResumoPedido() {
                                     height={64}
                                     className="h-full w-full object-contain"
                                 />
-                            )}
+                            ) : <div className="text-xs text-center">Sem Imagem</div>}
                         </div>
 
                         {/* INFO DO PRODUTO (Título e Qtd) */}
@@ -63,7 +63,7 @@ export default function ResumoPedido() {
 
                 {/* ESTADO VAZIO */}
                 {products.length === 0 && (
-                    <div className="border border-dashed border-[var(--color-brand-border)] bg-white/50 p-8 text-center">
+                    <div className="border border-dashed border-brand-border bg-white/50 p-8 text-center">
                         <p className="text-xs tracking-wide text-[var(--color-brand-muted)]">
                             Seu carrinho está vazio.
                         </p>

@@ -207,11 +207,11 @@ export default function Checkout() {
         <div className="mx-auto flex w-full max-w-480 flex-col gap-10 lg:flex-row items-start">
 
           {/* COLUNA ESQUERDA - DADOS DE ENTREGA E PEDIDO */}
-          <section className="w-full border border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] p-6 lg:w-[58%] sm:p-10">
+          <section className="w-full border border-brand-border p-6 lg:w-[58%] sm:p-10 bg-white">
 
             {/* HEADER */}
-            <div className="mb-8 border-b border-[var(--color-brand-border)] pb-8">
-              <span className="mb-4 inline-flex text-[10px] font-semibold uppercase tracking-widest text-[var(--color-brand-accent)] border border-[var(--color-brand-border)] bg-white px-3 py-1">
+            <div className="mb-8 border-b border-brand-border pb-8">
+              <span className="mb-4 inline-flex text-[10px] font-semibold uppercase tracking-widest text-[var(--color-brand-accent)] border border-brand-border bg-white px-3 py-1">
                 Checkout Seguro
               </span>
 
@@ -230,7 +230,7 @@ export default function Checkout() {
             </div>
 
             {/* FORMULARIO */}
-            <div className="border border-[var(--color-brand-border)] bg-white p-5 sm:p-8">
+            <div className="border border-brand-border bg-white p-5 sm:p-8">
               <FormCheckout
                 formData={formData}
                 setFormData={setFormData}
@@ -242,10 +242,10 @@ export default function Checkout() {
 
           {/* COLUNA DIREITA - ASIDE DE PAGAMENTO */}
           <aside className="w-full lg:w-[42%] lg:sticky lg:top-8">
-            <div className="border border-[var(--color-brand-border)] bg-white p-6 sm:p-10">
+            <div className="border border-brand-border bg-white p-6 sm:p-10">
 
               {/* HEADER ASIDE */}
-              <div className="mb-6 border-b border-[var(--color-brand-border)] pb-6">
+              <div className="mb-6 border-b border-brand-border pb-6">
                 <h2 className="text-2xl font-medium tracking-tight text-[var(--color-brand-dark)]">
                   Pagamento
                 </h2>
@@ -264,7 +264,7 @@ export default function Checkout() {
               </div>
 
               {/* GATEWAY INTEGRATION CONTAINER */}
-              <div className="border border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] p-2 sm:p-4">
+              <div className="border border-brand-border bg-[var(--color-brand-bg)] p-2 sm:p-4">
                 {amount > 0 && (
                   <PaymentBrick
                     key={paymentBrickKey}
@@ -305,7 +305,7 @@ export default function Checkout() {
               {/* BOTAO AUXILIAR DE RETORNO */}
               <button
                 onClick={() => router.push('/')}
-                className="mt-6 flex h-12 w-full items-center justify-center border border-[var(--color-brand-border)] bg-transparent text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)] transition-all duration-200 hover:border-[var(--color-brand-dark)] hover:text-[var(--color-brand-dark)] cursor-pointer"
+                className="mt-6 flex h-12 w-full items-center justify-center border border-brand-border bg-transparent text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)] transition-all duration-200 hover:border-[var(--color-brand-dark)] hover:text-[var(--color-brand-dark)] cursor-pointer"
               >
                 Voltar e alterar carrinho
               </button>

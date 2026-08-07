@@ -97,7 +97,7 @@ export default function FormCheckout({
         outline-none transition-colors duration-200
         ${errors[field] || (field === 'cpf' && isCpfError)
             ? 'border-red-500 focus:border-red-600'
-            : 'border-[var(--color-brand-border)] focus:border-[var(--color-brand-dark)]'
+            : 'border-brand-border focus:border-[var(--color-brand-dark)]'
         }
     `;
 
@@ -110,7 +110,7 @@ export default function FormCheckout({
 
             {/* SEÇÃO: DADOS PESSOAIS */}
             <div>
-                <div className="mb-6 border-b border-[var(--color-brand-border)] pb-4">
+                <div className="mb-6 border-b border-brand-border pb-4">
                     <h2 className="text-xl font-medium tracking-tight text-[var(--color-brand-dark)]">
                         Dados pessoais
                     </h2>
@@ -183,7 +183,7 @@ export default function FormCheckout({
 
             {/* SEÇÃO: ENDEREÇO */}
             <div>
-                <div className="mb-6 border-b border-[var(--color-brand-border)] pb-4">
+                <div className="mb-6 border-b border-brand-border pb-4">
                     <h2 className="text-xl font-medium tracking-tight text-[var(--color-brand-dark)]">
                         Endereço de entrega
                     </h2>

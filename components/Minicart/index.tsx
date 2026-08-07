@@ -287,10 +287,9 @@ export default function MiniCart() {
                         flex h-20 w-20 shrink-0
                         items-center justify-center
                         overflow-hidden
-                        rounded-xl
                         border border-brand-border
                         
-                      ${product.image_url ? "bg-white" : "bg-gray-200"}
+                      ${product.image_url ? "bg-white" : "bg-gray-100"}
                       `}
                                         >
                                             {product.image_url ? (
@@ -464,7 +463,6 @@ export default function MiniCart() {
                                 onClick={closeMiniCart}
                                 className="
                   block w-full
-                  rounded-xl
                   bg-brand-dark
                   py-3.5
                   text-center
