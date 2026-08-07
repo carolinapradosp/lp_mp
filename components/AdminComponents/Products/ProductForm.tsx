@@ -19,6 +19,7 @@ import type {
     AdminProduct,
     PricingRule,
 } from '@/interfaces/Product';
+import ProductImageUpload from './ProductImageUpload';
 
 type ProductFormProps = {
     product?: AdminProduct;
@@ -290,29 +291,11 @@ export default function ProductForm({
                 </div>
 
                 <div className="md:col-span-2">
-                    <label
-                        htmlFor="image_url"
-                        className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                        URL da imagem
-                    </label>
-
-                    <input
-                        id="image_url"
-                        name="image_url"
-                        type="url"
-                        defaultValue={product?.image_url ?? ''}
-                        placeholder="https://..."
-                        className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
+                    <ProductImageUpload
+                        initialImageUrl={product?.image_url}
+                        error={state.errors?.image_url}
                     />
-
-                    {state.errors?.image_url && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {state.errors.image_url}
-                        </p>
-                    )}
                 </div>
-
                 <div className="md:col-span-2">
                     <label className="flex cursor-pointer items-center gap-3">
                         <input
