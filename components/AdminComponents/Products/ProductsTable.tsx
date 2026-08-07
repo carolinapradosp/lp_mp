@@ -2,10 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-
-import { toggleProductStatus } from '@/app/admin/(protected)/products/actions';
+import { FiEdit2 } from 'react-icons/fi';
 
 import type { AdminProduct } from '@/interfaces/Product';
+
+import ProductActions from './ProductActions';
+import ProductStatusSwitch from './ProductStatusSwitch';
 
 type ProductsTableProps = {
     products: AdminProduct[];
@@ -49,19 +51,19 @@ export default function ProductsTable({
                                 Preço base
                             </th>
 
-                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
+                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500 text-center">
                                 Estoque
                             </th>
 
-                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
+                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500 text-center">
                                 Regras
                             </th>
 
-                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
+                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500 text-center">
                                 Status
                             </th>
 
-                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
+                            <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500 text-center">
                                 Ações
                             </th>
                         </tr>
@@ -75,12 +77,8 @@ export default function ProductsTable({
                                         <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-slate-100">
                                             {product.image_url ? (
                                                 <Image
-                                                    src={
-                                                        product.image_url
-                                                    }
-                                                    alt={
-                                                        product.title
-                                                    }
+                                                    src={product.image_url}
+                                                    alt={product.title}
                                                     fill
                                                     sizes="48px"
                                                     className="object-cover"
@@ -111,67 +109,33 @@ export default function ProductsTable({
                                     )}
                                 </td>
 
-                                <td className="px-5 py-4 text-sm text-slate-700">
+                                <td className="px-5 py-4 text-sm text-slate-700 text-center">
                                     {product.stock}
                                 </td>
 
-                                <td className="px-5 py-4 text-sm text-slate-700">
+                                <td className="px-5 py-4 text-sm text-slate-700 text-center">
                                     {product.pricing_rules.length}
                                 </td>
 
                                 <td className="px-5 py-4">
-                                    <span
-                                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${product.active
-                                                ? 'bg-emerald-100 text-emerald-700'
-                                                : 'bg-slate-100 text-slate-600'
-                                            }`}
-                                    >
-                                        {product.active
-                                            ? 'Ativo'
-                                            : 'Inativo'}
-                                    </span>
+                                    <div className="flex justify-center gap-2">
+
+                                        <ProductStatusSwitch
+                                            productId={product.id}
+                                            productTitle={product.title}
+                                            active={product.active}
+                                        />
+                                    </div>
                                 </td>
 
                                 <td className="px-5 py-4">
-                                    <div className="flex items-center gap-4">
-                                        <Link
-                                            href={`/admin/products/${product.id}/edit`}
-                                            className="text-sm font-semibold text-slate-700 transition hover:text-slate-950"
-                                        >
-                                            Editar
-                                        </Link>
-
-                                        <form
-                                            action={
-                                                toggleProductStatus
+                                    <div className="flex justify-center gap-2">
+                                        <ProductActions
+                                            productId={product.id}
+                                            productTitle={
+                                                product.title
                                             }
-                                        >
-                                            <input
-                                                type="hidden"
-                                                name="product_id"
-                                                value={product.id}
-                                            />
-
-                                            <input
-                                                type="hidden"
-                                                name="current_status"
-                                                value={String(
-                                                    product.active,
-                                                )}
-                                            />
-
-                                            <button
-                                                type="submit"
-                                                className={`text-sm font-semibold transition ${product.active
-                                                        ? 'text-red-600 hover:text-red-800'
-                                                        : 'text-emerald-600 hover:text-emerald-800'
-                                                    }`}
-                                            >
-                                                {product.active
-                                                    ? 'Desativar'
-                                                    : 'Ativar'}
-                                            </button>
-                                        </form>
+                                        />
                                     </div>
                                 </td>
                             </tr>

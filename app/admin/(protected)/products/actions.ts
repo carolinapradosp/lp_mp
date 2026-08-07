@@ -44,6 +44,20 @@ type ParsedProductFormData = {
   pricingRules: PricingRule[];
 };
 
+export type DeleteProductState = {
+  success: boolean;
+  message: string;
+};
+
+type ProductToDeleteRow = {
+  id: string;
+  image_url: string | null;
+};
+
+type ProductOrderReferenceRow = {
+  has_orders: boolean;
+};
+
 function isVercelBlobUrl(url: string): boolean {
   try {
     const parsedUrl = new URL(url);
@@ -480,4 +494,119 @@ export async function toggleProductStatus(formData: FormData): Promise<void> {
 
   revalidatePath('/');
   revalidatePath('/admin/products');
+}
+
+export async function deleteProduct(
+  previousState: DeleteProductState,
+  formData: FormData
+): Promise<DeleteProductState> {
+  void previousState;
+
+  const isAuthenticated = await verifyAdminSession();
+
+  if (!isAuthenticated) {
+    return {
+      success: false,
+      message: 'Você não tem permissão para excluir produtos.',
+    };
+  }
+
+  const productId = String(formData.get('product_id') ?? '').trim();
+
+  if (!productId) {
+    return {
+      success: false,
+      message: 'Produto não identificado.',
+    };
+  }
+
+  try {
+    const products = await sql`
+            SELECT
+                id,
+                image_url
+            FROM public.products
+            WHERE id = ${productId}
+            LIMIT 1
+        `;
+
+    const product = (products as ProductToDeleteRow[])[0];
+
+    if (!product) {
+      return {
+        success: false,
+        message: 'Produto não encontrado.',
+      };
+    }
+
+    /*
+     * Não permite excluir um produto que já faz parte
+     * do histórico de pedidos.
+     */
+    const references = await sql`
+            SELECT EXISTS (
+                SELECT 1
+                FROM public.order_items
+                WHERE product_id = ${productId}
+            ) AS has_orders
+        `;
+
+    const { has_orders: hasOrders } = (
+      references as ProductOrderReferenceRow[]
+    )[0];
+
+    if (hasOrders) {
+      return {
+        success: false,
+        message:
+          'Este produto já possui pedidos vinculados e não pode ser excluído. Desative o produto para removê-lo da loja.',
+      };
+    }
+
+    /*
+     * Primeiro removemos as regras progressivas.
+     */
+    await sql`
+            DELETE FROM public.product_pricing_rules
+            WHERE product_id = ${productId}
+        `;
+
+    /*
+     * Depois removemos o produto.
+     */
+    await sql`
+            DELETE FROM public.products
+            WHERE id = ${productId}
+        `;
+
+    /*
+     * O produto já foi removido do banco.
+     * Agora podemos excluir sua imagem.
+     */
+    if (product.image_url && isVercelBlobUrl(product.image_url)) {
+      try {
+        await del(product.image_url);
+      } catch (deleteImageError) {
+        console.error(
+          'Produto excluído, mas não foi possível excluir sua imagem:',
+          deleteImageError
+        );
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao excluir produto:', error);
+
+    return {
+      success: false,
+      message: 'Não foi possível excluir o produto. Tente novamente.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/admin/products');
+
+  return {
+    success: true,
+    message: 'Produto excluído com sucesso.',
+  };
 }
