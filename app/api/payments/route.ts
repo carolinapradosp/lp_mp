@@ -1,20 +1,13 @@
 // app/api/payments/route.ts
 
 import { NextResponse } from 'next/server';
-
 import { isCheckoutError, CheckoutError } from '@/lib/checkout/checkout-error';
-
 import { parseCheckoutInput } from '@/lib/checkout/parse-checkout-input';
 import { calculateOrder } from '@/lib/checkout/calculate-order';
-
 import { createPendingOrder } from '@/lib/orders/create-pending-order';
-
-import {
-  markPaymentCreationFailed,
-  savePaymentResult,
-} from '@/lib/orders/payment-updates';
-
+import { savePaymentResult } from '@/lib/orders/payment-updates';
 import { createMercadoPagoPayment } from '@/lib/mercadopago/create-payment';
+import { deletePendingOrder } from '@/lib/orders/delete-pending-order';
 
 export const runtime = 'nodejs';
 
@@ -54,14 +47,28 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error('Erro ao criar pagamento no Mercado Pago:', error);
 
+      /*
+       * O Mercado Pago não criou um pagamento.
+       *
+       * Portanto esse registro ainda não é um pedido
+       * válido para o sistema e deve ser removido.
+       */
       try {
-        await markPaymentCreationFailed({
+        await deletePendingOrder({
           pendingOrder,
         });
-      } catch (persistenceError) {
+      } catch (cleanupError) {
         console.error(
-          'Erro ao registrar falha de criação do pagamento:',
-          persistenceError
+          'CRÍTICO: falha ao remover pedido após erro na criação do pagamento:',
+          {
+            cleanupError,
+
+            orderId: pendingOrder.orderId,
+
+            externalReference: pendingOrder.externalReference,
+
+            paymentRecordId: pendingOrder.paymentRecordId,
+          }
         );
       }
 
