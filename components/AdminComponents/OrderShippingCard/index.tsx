@@ -30,7 +30,7 @@ export default function OrderShippingCard({
                 border-neutral-200
                 bg-white
                 p-6
-                shadow-[0_10px_35px_rgba(15,23,42,0.04)]
+                shadow-md
             "
         >
             {/* HEADER */}

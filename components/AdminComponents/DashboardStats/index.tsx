@@ -28,7 +28,7 @@ export default function DashboardStats({
                     border-neutral-200
                     bg-white
                     p-6
-                    shadow-[0_10px_30px_rgba(15,23,42,0.04)]
+                    shadow-md
                 "
             >
                 <div className="flex items-start justify-between gap-4">
@@ -70,7 +70,7 @@ export default function DashboardStats({
                     border-neutral-200
                     bg-white
                     p-6
-                    shadow-[0_10px_30px_rgba(15,23,42,0.04)]
+                    shadow-md
                 "
             >
                 <div className="flex items-start justify-between gap-4">
@@ -112,7 +112,7 @@ export default function DashboardStats({
                     border-neutral-200
                     bg-white
                     p-6
-                    shadow-[0_10px_30px_rgba(15,23,42,0.04)]
+                    shadow-md
                 "
             >
                 <div className="flex items-start justify-between gap-4">
