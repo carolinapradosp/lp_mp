@@ -283,16 +283,17 @@ export default function MiniCart() {
                     "
                                     >
                                         <div
-                                            className="
+                                            className={`
                         flex h-20 w-20 shrink-0
                         items-center justify-center
                         overflow-hidden
                         rounded-xl
                         border border-brand-border
-                        bg-white
-                      "
+                        
+                      ${product.image_url ? "bg-white" : "bg-gray-200"}
+                      `}
                                         >
-                                            {product.image_url && (
+                                            {product.image_url ? (
                                                 <Image
                                                     src={product.image_url}
                                                     alt={product.title}
@@ -304,7 +305,7 @@ export default function MiniCart() {
                             object-contain
                           "
                                                 />
-                                            )}
+                                            ) : <div className="text-xs text-center">Sem Imagem</div>}
                                         </div>
 
                                         <div className="flex min-w-0 flex-1 flex-col justify-between">
