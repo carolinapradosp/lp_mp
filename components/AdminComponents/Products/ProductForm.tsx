@@ -167,11 +167,19 @@ export default function ProductForm({
             className="rounded-xl border border-slate-200 bg-white p-6"
         >
             {product && (
-                <input
-                    type="hidden"
-                    name="product_id"
-                    value={product.id}
-                />
+                <>
+                    <input
+                        type="hidden"
+                        name="product_id"
+                        value={product.id}
+                    />
+
+                    <input
+                        type="hidden"
+                        name="previous_image_url"
+                        value={product.image_url ?? ''}
+                    />
+                </>
             )}
 
             <input

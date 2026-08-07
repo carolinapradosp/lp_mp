@@ -4,6 +4,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { del } from '@vercel/blob';
 
 import type { PricingRule } from '@/interfaces/Product';
 import { verifyAdminSession } from '@/lib/auth/admin-session';
@@ -42,6 +43,16 @@ type ParsedProductFormData = {
   active: boolean;
   pricingRules: PricingRule[];
 };
+
+function isVercelBlobUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+
+    return parsedUrl.hostname.endsWith('.public.blob.vercel-storage.com');
+  } catch {
+    return false;
+  }
+}
 
 function parseCurrency(value: FormDataEntryValue | null): number {
   const originalValue = String(value ?? '')
@@ -344,6 +355,10 @@ export async function updateProduct(
 
   const productData = getProductFormData(formData);
 
+  const previousImageUrl = String(
+    formData.get('previous_image_url') ?? ''
+  ).trim();
+
   if (!productData.productId) {
     return {
       success: false,
@@ -401,6 +416,22 @@ export async function updateProduct(
         `;
 
     await insertPricingRules(productData.productId, productData.pricingRules);
+
+    const imageWasChanged =
+      previousImageUrl &&
+      previousImageUrl !== productData.imageUrl &&
+      isVercelBlobUrl(previousImageUrl);
+
+    if (imageWasChanged) {
+      try {
+        await del(previousImageUrl);
+      } catch (deleteImageError) {
+        console.error(
+          'Produto atualizado, mas não foi possível excluir a imagem antiga:',
+          deleteImageError
+        );
+      }
+    }
   } catch (error) {
     console.error('Erro ao atualizar produto:', error);
 
