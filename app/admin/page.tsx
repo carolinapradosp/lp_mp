@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
             </div>
 
             {/* CARD */}
-            <div className="relative z-10 w-full max-w-md overflow-hidden rounded-4xl border border-white/60 bg-white/90 shadow-[0_25px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+            <div className="relative z-10 w-full max-w-md overflow-hidden rounded-xl border border-white/60 bg-white/90 shadow-md backdrop-blur-xl">
 
                 {/* TOPO */}
                 <div className="relative overflow-hidden border-b border-slate-100 bg-linear-to-r from-blue-600 via-indigo-500 to-red-500 px-8 py-10">
@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
                     <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
 
                     <div className="relative z-10 flex flex-col items-center text-center">
-                        <div className="mb-5 flex h-18 w-18 items-center justify-center rounded-3xl bg-white/15 backdrop-blur-md">
+                        <div className="mb-5 flex h-18 w-18 items-center justify-center rounded-xl bg-white/15 backdrop-blur-md">
                             <ShieldCheck
                                 size={36}
                                 className="text-white"

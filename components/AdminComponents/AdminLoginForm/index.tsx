@@ -67,7 +67,7 @@ export default function AdminLoginForm() {
                         Usuário
                     </label>
 
-                    <div className="flex h-14 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(59,130,246,0.08)]">
+                    <div className="flex h-14 items-center rounded-xl border border-slate-200 bg-slate-50 px-4 transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md">
                         <User
                             size={19}
                             className="text-slate-400"
@@ -90,7 +90,7 @@ export default function AdminLoginForm() {
                         Senha
                     </label>
 
-                    <div className="flex h-14 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(59,130,246,0.08)]">
+                    <div className="flex h-14 items-center rounded-xl border border-slate-200 bg-slate-50 px-4 transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md">
                         <Lock
                             size={19}
                             className="text-slate-400"
@@ -110,7 +110,7 @@ export default function AdminLoginForm() {
                 {/* BOTÃO */}
                 <button
                     type="submit"
-                    className="mt-2 flex h-14 w-full items-center justify-center rounded-2xl bg-linear-to-r from-blue-600 via-indigo-500 to-red-500 text-[15px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_14px_35px_rgba(59,130,246,0.28)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(59,130,246,0.38)]"
+                    className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-linear-to-r from-blue-600 via-indigo-500 to-red-500 text-[15px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_14px_35px_rgba(59,130,246,0.28)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(59,130,246,0.38)]"
                 >
                     Entrar
                 </button>

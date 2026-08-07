@@ -36,9 +36,9 @@ const FINAL_PAYMENT_STATUSES = new Set<StatusPayment>([
 function OrderConfirmationLoading() {
     return (
         <main className="flex min-h-screen items-center justify-center bg-white px-4">
-            <div className="w-full max-w-sm border border-[var(--color-brand-border)] bg-white p-8 text-center">
+            <div className="w-full max-w-sm border border-brand-border bg-white p-8 text-center">
                 <div className="flex flex-col items-center">
-                    <div className="mb-4 h-8 w-8 animate-spin border-2 border-[var(--color-brand-border)] border-t-[var(--color-brand-dark)]" />
+                    <div className="mb-4 h-8 w-8 animate-spin border-2 border-brand-border border-t-[var(--color-brand-dark)]" />
 
                     <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-dark)]">
                         Carregando informações...
@@ -456,7 +456,7 @@ function OrderConfirmationContent() {
     ) {
         return (
             <main className="flex min-h-screen items-center justify-center bg-white px-4 py-16">
-                <div className="w-full max-w-lg border border-[var(--color-brand-border)] bg-white p-8 text-center">
+                <div className="w-full max-w-lg border border-brand-border bg-white p-8 text-center">
                     <h1 className="text-2xl font-bold tracking-tight text-[var(--color-brand-dark)]">
                         Não foi possível carregar o pedido
                     </h1>
@@ -486,7 +486,7 @@ function OrderConfirmationContent() {
                         onClick={() => {
                             router.replace('/');
                         }}
-                        className="mt-3 w-full cursor-pointer border border-[var(--color-brand-border)] px-6 py-4 text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)] transition-colors duration-200 hover:border-[var(--color-brand-dark)] hover:text-[var(--color-brand-dark)]"
+                        className="mt-3 w-full cursor-pointer border border-brand-border px-6 py-4 text-xs font-semibold uppercase tracking-widest text-[var(--color-brand-muted)] transition-colors duration-200 hover:border-[var(--color-brand-dark)] hover:text-[var(--color-brand-dark)]"
                     >
                         Voltar para a loja
                     </button>
@@ -512,7 +512,7 @@ function OrderConfirmationContent() {
                     </p>
                 </div>
 
-                <div className="border border-[var(--color-brand-border)] bg-white p-6 sm:p-10">
+                <div className="border border-brand-border bg-white p-6 sm:p-10">
                     <MessagePayment
                         type={paymentStatus}
                         amount={amount}

@@ -4,7 +4,7 @@ import Logo from '../Logo/Logo';
 
 export default function Footer() {
     return (
-        <footer className="w-full border-t border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] text-[var(--color-brand-dark)] transition-colors duration-300">
+        <footer className="w-full border-t border-brand-border bg-[var(--color-brand-bg)] text-[var(--color-brand-dark)] transition-colors duration-300">
             <div className="mx-auto flex w-full max-w-480 flex-col items-center justify-between gap-8 px-4 py-12 text-center sm:px-6 lg:flex-row lg:px-8 lg:py-16 lg:text-left">
 
                 {/* ESQUERDA - Branding & Descrição */}
@@ -21,11 +21,11 @@ export default function Footer() {
 
                     {/* Selos minimalistas com bordas retas alinhadas ao tema */}
                     <div className="flex flex-wrap justify-center gap-3">
-                        <span className="border border-[var(--color-brand-border)] bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-widest text-[var(--color-brand-dark)]">
+                        <span className="border border-brand-border bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-widest text-[var(--color-brand-dark)]">
                             Compra Segura
                         </span>
 
-                        <span className="border border-[var(--color-brand-border)] bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-widest text-[var(--color-brand-accent)]">
+                        <span className="border border-brand-border bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-widest text-[var(--color-brand-accent)]">
                             Entrega Expressa
                         </span>
                     </div>

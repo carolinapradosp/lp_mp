@@ -33,12 +33,12 @@ export default function OrderProductsCard({
     return (
         <section
             className="
-                rounded-4xl
+                rounded-xl
                 border
                 border-neutral-200
                 bg-white
                 p-6
-                shadow-[0_10px_35px_rgba(15,23,42,0.04)]
+                shadow-md
             "
         >
 
@@ -52,7 +52,7 @@ export default function OrderProductsCard({
                         w-14
                         items-center
                         justify-center
-                        rounded-2xl
+                        rounded-xl
                         bg-blue-50
                         text-blue-600
                     "
@@ -80,7 +80,7 @@ export default function OrderProductsCard({
                     <div
                         key={item.id}
                         className="
-                            rounded-2xl
+                            rounded-xl
                             border
                             border-neutral-200
                             bg-[#fafafa]
@@ -128,7 +128,7 @@ export default function OrderProductsCard({
             <div
                 className="
                     mt-8
-                    rounded-3xl
+                    rounded-xl
                     border
                     border-neutral-200
                     bg-[#fafafa]

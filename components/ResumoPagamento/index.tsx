@@ -29,7 +29,7 @@ export default function ResumoPagamento({
     );
 
     return (
-        <div className="border border-[var(--color-brand-border)] bg-white p-6">
+        <div className="border border-brand-border bg-white p-6">
 
             {/* VALORES DO RESUMO */}
             <div className="space-y-4">
@@ -72,7 +72,7 @@ export default function ResumoPagamento({
             </div>
 
             {/* COMPONENTES DE BENEFÍCIO DO CHECKOUT */}
-            <div className="mt-8 space-y-3 border-t border-[var(--color-brand-border)] pt-6">
+            <div className="mt-8 space-y-3 border-t border-brand-border pt-6">
 
                 {/* SEGURANÇA */}
                 <div className="flex items-start gap-3">

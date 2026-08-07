@@ -15,6 +15,12 @@ export type Product = {
   pricing_rules: PricingRule[];
 };
 
+export type AdminProduct = Product & {
+  active: boolean;
+  created_at: Date;
+  updated_at?: Date;
+};
+
 export type CartProduct = Product & {
   price: number;
   quantity: number;

@@ -82,7 +82,7 @@ export default function MessagePayment({
 
         {/* QR CODE COM BORDA FINA */}
         <div className="mt-8 flex justify-center">
-          <div className="border border-[var(--color-brand-border)] bg-white p-4">
+          <div className="border border-brand-border bg-white p-4">
             {pixData?.qrCodeBase64 ? (
               <Image
                 src={`data:image/png;base64,${pixData.qrCodeBase64}`}
@@ -101,7 +101,7 @@ export default function MessagePayment({
 
         {/* ÁREA DE TEXTO COPIA E COLA */}
         <div className="mt-8">
-          <div className="border border-[var(--color-brand-border)] bg-neutral-50 p-4 text-left">
+          <div className="border border-brand-border bg-neutral-50 p-4 text-left">
             <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-[var(--color-brand-muted)]">
               Código Pix Copia e Cola
             </p>

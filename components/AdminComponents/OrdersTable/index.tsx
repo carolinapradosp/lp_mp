@@ -77,7 +77,7 @@ export default function OrdersTable({
     }
 
     return (
-        <div className="overflow-x-auto rounded-3xl border border-neutral-200">
+        <div className="overflow-x-auto rounded-xl border border-neutral-200">
             <table className="w-full min-w-225 bg-white">
                 <caption className="sr-only">
                     Lista de pedidos realizados na loja

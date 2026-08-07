@@ -17,7 +17,7 @@ export default function InfoField({
 
             <div
                 className="
-                    rounded-2xl
+                    rounded-xl
                     border
                     border-slate-200
                     bg-white
