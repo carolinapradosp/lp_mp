@@ -144,7 +144,7 @@ export default function ProductImageUpload({
             <div className="rounded-xl border border-slate-200 p-4">
                 {imageUrl ? (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <div className="relative h-40 w-full overflow-hidden rounded-lg bg-slate-100 sm:size-40 sm:shrink-0">
+                        <div className="relative h-40 w-full overflow-hidden rounded-xl bg-slate-100 sm:size-40 sm:shrink-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={imageUrl}
@@ -166,9 +166,9 @@ export default function ProductImageUpload({
 
                             <div className="flex flex-wrap gap-3">
                                 <label
-                                    className={`inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 ${isUploading
-                                            ? 'pointer-events-none opacity-50'
-                                            : ''
+                                    className={`inline-flex min-h-10 cursor-pointer items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 ${isUploading
+                                        ? 'pointer-events-none opacity-50'
+                                        : ''
                                         }`}
                                 >
                                     Trocar imagem
@@ -189,7 +189,7 @@ export default function ProductImageUpload({
                                     type="button"
                                     onClick={handleRemoveImage}
                                     disabled={isUploading}
-                                    className="min-h-10 rounded-lg px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="min-h-10 rounded-xl px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     Remover
                                 </button>
@@ -198,9 +198,9 @@ export default function ProductImageUpload({
                     </div>
                 ) : (
                     <label
-                        className={`flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center transition hover:border-slate-400 hover:bg-slate-100 ${isUploading
-                                ? 'pointer-events-none opacity-60'
-                                : ''
+                        className={`flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center transition hover:border-slate-400 hover:bg-slate-100 ${isUploading
+                            ? 'pointer-events-none opacity-60'
+                            : ''
                             }`}
                     >
                         <span className="text-sm font-semibold text-slate-800">

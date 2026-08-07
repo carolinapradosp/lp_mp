@@ -39,7 +39,7 @@ export default async function ProductsPage() {
 
                         <Link
                             href="/admin/products/new"
-                            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700"
+                            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700"
                         >
                             Novo produto
                         </Link>

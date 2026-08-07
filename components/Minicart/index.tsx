@@ -287,7 +287,7 @@ export default function MiniCart() {
                         flex h-20 w-20 shrink-0
                         items-center justify-center
                         overflow-hidden
-                        rounded-2xl
+                        rounded-xl
                         border border-brand-border
                         bg-white
                       "
@@ -357,7 +357,7 @@ export default function MiniCart() {
                                                     className="
                             flex h-8 items-center
                             overflow-hidden
-                            rounded-lg
+                            rounded-xl
                             border border-brand-border
                             bg-white
                           "

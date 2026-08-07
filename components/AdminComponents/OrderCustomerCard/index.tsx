@@ -19,7 +19,7 @@ export default function OrderCustomerCard({
     return (
         <section
             className="
-                rounded-4xl
+                rounded-xl
                 border
                 border-neutral-200
                 bg-white
@@ -36,7 +36,7 @@ export default function OrderCustomerCard({
                         w-14
                         items-center
                         justify-center
-                        rounded-2xl
+                        rounded-xl
                         bg-blue-50
                         text-blue-600
                     "

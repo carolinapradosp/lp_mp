@@ -23,7 +23,7 @@ export default function DashboardStats({
             {/* TOTAL PEDIDOS */}
             <div
                 className="
-                    rounded-[28px]
+                    rounded-xl
                     border
                     border-neutral-200
                     bg-white
@@ -50,7 +50,7 @@ export default function DashboardStats({
                             w-16
                             items-center
                             justify-center
-                            rounded-2xl
+                            rounded-xl
                             bg-blue-50
                         "
                     >
@@ -65,7 +65,7 @@ export default function DashboardStats({
             {/* APROVADOS */}
             <div
                 className="
-                    rounded-[28px]
+                    rounded-xl
                     border
                     border-neutral-200
                     bg-white
@@ -92,7 +92,7 @@ export default function DashboardStats({
                             w-16
                             items-center
                             justify-center
-                            rounded-2xl
+                            rounded-xl
                             bg-emerald-50
                         "
                     >
@@ -107,7 +107,7 @@ export default function DashboardStats({
             {/* FATURAMENTO */}
             <div
                 className="
-                    rounded-[28px]
+                    rounded-xl
                     border
                     border-neutral-200
                     bg-white
@@ -140,7 +140,7 @@ export default function DashboardStats({
                             w-16
                             items-center
                             justify-center
-                            rounded-2xl
+                            rounded-xl
                             bg-violet-50
                         "
                     >

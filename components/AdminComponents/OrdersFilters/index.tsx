@@ -12,7 +12,7 @@ interface OrdersFiltersProps {
 const inputClass = `
   h-14
   w-full
-  rounded-2xl
+  rounded-xl
   border border-neutral-200
   bg-[#f8fafc]
   px-4
@@ -106,7 +106,7 @@ export default function OrdersFilters({
                 <button
                     type="submit"
                     className="
-            h-14 flex-1 rounded-2xl
+            h-14 flex-1 rounded-xl
             bg-blue-600 px-6
             text-sm font-bold text-white
             transition-all
@@ -121,7 +121,7 @@ export default function OrdersFilters({
                     type="button"
                     onClick={onClear}
                     className="
-            h-14 rounded-2xl
+            h-14 rounded-xl
             border border-neutral-200
             bg-white px-6
             text-sm font-bold text-neutral-700

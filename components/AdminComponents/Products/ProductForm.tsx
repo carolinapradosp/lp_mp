@@ -205,7 +205,7 @@ export default function ProductForm({
                         type="text"
                         defaultValue={product?.title ?? ''}
                         required
-                        className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
+                        className="min-h-11 w-full rounded-xl border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                     />
 
                     {state.errors?.title && (
@@ -230,7 +230,7 @@ export default function ProductForm({
                         defaultValue={
                             product?.description ?? ''
                         }
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-700"
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-700"
                     />
 
                     {state.errors?.description && (
@@ -262,7 +262,7 @@ export default function ProductForm({
                         }
                         placeholder="1.149,90"
                         required
-                        className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
+                        className="min-h-11 w-full rounded-xl border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                     />
 
                     {state.errors?.base_price && (
@@ -288,7 +288,7 @@ export default function ProductForm({
                         step="1"
                         defaultValue={product?.stock ?? 0}
                         required
-                        className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
+                        className="min-h-11 w-full rounded-xl border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                     />
 
                     {state.errors?.stock && (
@@ -338,14 +338,14 @@ export default function ProductForm({
                     <button
                         type="button"
                         onClick={addPricingRule}
-                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                         Adicionar regra
                     </button>
                 </div>
 
                 {pricingRules.length === 0 ? (
-                    <div className="mt-5 rounded-lg border border-dashed border-slate-300 p-6 text-center">
+                    <div className="mt-5 rounded-xl border border-dashed border-slate-300 p-6 text-center">
                         <p className="text-sm text-slate-500">
                             Nenhuma regra progressiva cadastrada.
                         </p>
@@ -355,7 +355,7 @@ export default function ProductForm({
                         {pricingRules.map((rule) => (
                             <div
                                 key={rule.id}
-                                className="grid gap-4 rounded-lg border border-slate-200 p-4 sm:grid-cols-[1fr_1fr_auto]"
+                                className="grid gap-4 rounded-xl border border-slate-200 p-4 sm:grid-cols-[1fr_1fr_auto]"
                             >
                                 <div>
                                     <label
@@ -383,7 +383,7 @@ export default function ProductForm({
                                         }
                                         placeholder="2"
                                         required
-                                        className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
+                                        className="min-h-11 w-full rounded-xl border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                                     />
                                 </div>
 
@@ -410,7 +410,7 @@ export default function ProductForm({
                                         }
                                         placeholder="1.099,00"
                                         required
-                                        className="min-h-11 w-full rounded-lg border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
+                                        className="min-h-11 w-full rounded-xl border border-slate-300 px-4 text-slate-900 outline-none transition focus:border-slate-700"
                                     />
                                 </div>
 
@@ -422,7 +422,7 @@ export default function ProductForm({
                                                 rule.id,
                                             )
                                         }
-                                        className="min-h-11 rounded-lg px-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                                        className="min-h-11 rounded-xl px-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                                     >
                                         Remover
                                     </button>
@@ -440,7 +440,7 @@ export default function ProductForm({
             </div>
 
             {state.message && !state.success && (
-                <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+                <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
                     {state.message}
                 </div>
             )}
@@ -448,7 +448,7 @@ export default function ProductForm({
             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <Link
                     href="/admin/products"
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                     Cancelar
                 </Link>
@@ -456,7 +456,7 @@ export default function ProductForm({
                 <button
                     type="submit"
                     disabled={pending}
-                    className="min-h-11 rounded-lg bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-11 rounded-xl bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {pending
                         ? 'Salvando...'

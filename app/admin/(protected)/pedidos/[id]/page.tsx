@@ -142,7 +142,7 @@ export default function OrderDetailsPage({
     if (!loading && !order) {
         return (
             <main className="flex min-h-screen items-center justify-center bg-slate-50">
-                <div className="rounded-3xl border border-red-200 bg-white px-10 py-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+                <div className="rounded-xl border border-red-200 bg-white px-10 py-8 shadow-md">
                     <p className="text-lg font-semibold text-red-500">
                         Pedido não encontrado
                     </p>
@@ -173,11 +173,11 @@ export default function OrderDetailsPage({
                                 className="
                                     mb-8
                                     overflow-hidden
-                                    rounded-4xl
+                                    rounded-xl
                                     border
                                     border-slate-200
                                     bg-white
-                                    shadow-[0_20px_60px_rgba(15,23,42,0.06)]
+                                    shadow-md
                                 "
                             >
                                 <div
@@ -205,7 +205,7 @@ export default function OrderDetailsPage({
                                                 shrink-0
                                                 items-center
                                                 justify-center
-                                                rounded-2xl
+                                                rounded-xl
                                                 border
                                                 border-slate-200
                                                 bg-slate-50
@@ -242,7 +242,7 @@ export default function OrderDetailsPage({
                                                 inline-flex
                                                 items-center
                                                 justify-center
-                                                rounded-2xl
+                                                rounded-xl
                                                 border
                                                 px-5
                                                 py-4
@@ -261,7 +261,7 @@ export default function OrderDetailsPage({
                                                 flex
                                                 items-center
                                                 gap-3
-                                                rounded-2xl
+                                                rounded-xl
                                                 border
                                                 border-slate-200
                                                 bg-slate-50
@@ -303,7 +303,7 @@ export default function OrderDetailsPage({
                                 >
                                     <div
                                         className="
-                                            rounded-3xl
+                                            rounded-xl
                                             border
                                             border-slate-200
                                             bg-slate-50
@@ -336,7 +336,7 @@ export default function OrderDetailsPage({
                                                     w-14
                                                     items-center
                                                     justify-center
-                                                    rounded-2xl
+                                                    rounded-xl
                                                     bg-blue-100
                                                 "
                                             >
@@ -350,7 +350,7 @@ export default function OrderDetailsPage({
 
                                     <div
                                         className="
-                                            rounded-3xl
+                                            rounded-xl
                                             border
                                             border-slate-200
                                             bg-slate-50
@@ -376,7 +376,7 @@ export default function OrderDetailsPage({
 
                                     <div
                                         className="
-                                            rounded-3xl
+                                            rounded-xl
                                             border
                                             border-slate-200
                                             bg-slate-50

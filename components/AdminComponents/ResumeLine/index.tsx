@@ -15,7 +15,7 @@ export default function ResumeLine({
                 flex
                 items-center
                 justify-between
-                rounded-2xl
+                rounded-xl
                 border
                 border-slate-200
                 bg-slate-50

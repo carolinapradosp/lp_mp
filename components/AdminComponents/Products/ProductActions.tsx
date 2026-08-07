@@ -64,7 +64,7 @@ export default function ProductActions({
                     disabled={deletePending}
                     aria-label={`Excluir ${productTitle}`}
                     title="Excluir"
-                    className="inline-flex size-9 items-center justify-center rounded-lg text-red-600 transition hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex size-9 items-center justify-center rounded-xl text-red-600 transition hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <FiTrash2 size={18} />
                 </button>
@@ -73,7 +73,7 @@ export default function ProductActions({
                     href={`/admin/products/${productId}/edit`}
                     aria-label={`Editar ${productTitle}`}
                     title="Editar"
-                    className="inline-flex size-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+                    className="inline-flex size-9 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
                 >
                     <FiEdit2 size={18} />
                 </Link>
