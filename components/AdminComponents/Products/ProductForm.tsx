@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import {
     useActionState,
+    useEffect,
     useRef,
     useState,
 } from 'react';
@@ -87,6 +88,13 @@ function createInitialRules(
 export default function ProductForm({
     product,
 }: ProductFormProps) {
+
+    const [hydrated, setHydrated] = useState(false);
+
+    useEffect(() => {
+        setHydrated(true);
+    }, []);
+
     const isEditing = Boolean(product);
 
     const productAction = isEditing
@@ -164,6 +172,7 @@ export default function ProductForm({
     return (
         <form
             action={formAction}
+            data-hydrated={hydrated ? 'true' : 'false'}
             className="rounded-xl border border-slate-200 bg-white p-6"
         >
             {product && (
