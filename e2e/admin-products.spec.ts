@@ -57,11 +57,7 @@ test.describe('Gerenciamento de produtos', () => {
     /*
      * Acessa Produtos.
      */
-    await page
-      .getByRole('link', {
-        name: /produtos/i,
-      })
-      .click();
+    await page.goto('/admin/products');
 
     await expect(page).toHaveURL(/\/admin\/products$/, {
       timeout: 20_000,

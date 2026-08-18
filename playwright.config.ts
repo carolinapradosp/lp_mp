@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+
 import dotenv from 'dotenv';
 
 dotenv.config({
@@ -7,6 +8,15 @@ dotenv.config({
 
 export default defineConfig({
   testDir: './e2e',
+
+  /*
+   * Os testes usam o mesmo servidor Next,
+   * banco e usuário administrativo.
+   *
+   * Rodamos em apenas um worker para evitar
+   * interferência entre os fluxos E2E.
+   */
+  workers: 1,
 
   fullyParallel: false,
 
@@ -34,8 +44,11 @@ export default defineConfig({
 
   webServer: {
     command: 'npm run dev',
+
     url: 'http://localhost:3000',
+
     reuseExistingServer: !process.env.CI,
+
     timeout: 120 * 1000,
   },
 });
