@@ -17,10 +17,9 @@ jobs:
     timeout-minutes: 30
 
     env:
-      DATABASE_URL_PRD: ${{ secrets.DATABASE_URL_PRD }}
-
-      ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       E2E_ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
@@ -38,26 +37,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Jest tests
-        run: npm test
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
 
-      - name: Check environment variables
+      - name: Check Vercel connection
         run: |
-          if [ -z "$DATABASE_URL_PRD" ]; then
-            echo "❌ DATABASE_URL_PRD não está disponível"
-            exit 1
-          else
-            echo "✅ DATABASE_URL_PRD está disponível"
-          fi
+          vercel env ls preview \
+            --token="$VERCEL_TOKEN"
+
+      - name: Run Jest tests
+        run: |
+          vercel env run \
+            -e preview \
+            --token="$VERCEL_TOKEN" \
+            -- npm test
 
       - name: Build application
-        run: npm run build
+        run: |
+          vercel env run \
+            -e preview \
+            --token="$VERCEL_TOKEN" \
+            -- npm run build
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: |
+          vercel env run \
+            -e preview \
+            --token="$VERCEL_TOKEN" \
+            -- npm run test:e2e
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
