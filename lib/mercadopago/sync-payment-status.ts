@@ -1,6 +1,5 @@
 // lib/mercadopago/sync-payment-status.ts
 
-import { dbPool } from '@/lib/db';
 import { pusherServer } from '@/lib/pusher-server';
 
 import { mercadoPagoPayment } from './client';
@@ -11,6 +10,7 @@ import {
   shouldUpdatePaymentStatus,
   type MPStatus,
 } from './payment-status';
+import { dbPool } from '../database/neon';
 
 type PaymentRow = {
   id: string;

@@ -1,7 +1,6 @@
 // lib/orders/payment-updates.ts
 
-import { dbPool } from '@/lib/db';
-
+import { dbPool } from '../database/neon';
 import type { PendingOrder } from './create-pending-order';
 import type { MPStatus } from '@/lib/mercadopago/payment-status';
 

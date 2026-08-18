@@ -1,6 +1,5 @@
 // lib/checkout/calculate-order.ts
 
-import { sql } from '@/lib/db';
 import { getShippingCost } from '@/lib/settings/queries';
 import { CheckoutError } from './checkout-error';
 import type {
@@ -8,6 +7,7 @@ import type {
   CalculatedOrderItem,
   CheckoutItemInput,
 } from './types';
+import { sql } from '../database/neon';
 
 type ProductRow = {
   id: string;

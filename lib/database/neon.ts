@@ -1,6 +1,6 @@
 // lib/database/neon.ts
 
-import { neon } from '@neondatabase/serverless';
+import { neon, Pool } from '@neondatabase/serverless';
 
 const databaseUrl =
   process.env.DATABASE_URL_TEST ?? process.env.DATABASE_URL_PRD;
@@ -10,3 +10,7 @@ if (!databaseUrl) {
 }
 
 export const sql = neon(databaseUrl);
+
+export const dbPool = new Pool({
+  connectionString: databaseUrl,
+});
