@@ -41,6 +41,15 @@ jobs:
       - name: Run Jest tests
         run: npm test
 
+      - name: Check environment variables
+        run: |
+          if [ -z "$DATABASE_URL_PRD" ]; then
+            echo "❌ DATABASE_URL_PRD não está disponível"
+            exit 1
+          else
+            echo "✅ DATABASE_URL_PRD está disponível"
+          fi
+
       - name: Build application
         run: npm run build
 
