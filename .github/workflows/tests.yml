@@ -40,9 +40,32 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Check Vercel connection
+      - name: Check Vercel IDs
         run: |
-          vercel env ls preview \
+          if [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "❌ VERCEL_PROJECT_ID ausente"
+            exit 1
+          else
+            echo "✅ VERCEL_PROJECT_ID disponível"
+          fi
+
+          if [ -z "$VERCEL_ORG_ID" ]; then
+            echo "❌ VERCEL_ORG_ID ausente"
+            exit 1
+          else
+            echo "✅ VERCEL_ORG_ID disponível"
+          fi
+
+      - name: Check Vercel project
+        run: |
+          vercel project inspect "$VERCEL_PROJECT_ID" \
+            --token="$VERCEL_TOKEN"
+
+      - name: Pull Vercel Preview environment
+        run: |
+          vercel pull \
+            --yes \
+            --environment=preview \
             --token="$VERCEL_TOKEN"
 
       - name: Run Jest tests
