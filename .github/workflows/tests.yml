@@ -19,13 +19,13 @@ jobs:
     env:
       DATABASE_URL_TEST: ${{ secrets.DATABASE_URL_TEST }}
 
-      MP_ACCESS_TOKEN: ${{ secrets.MP_ACCESS_TOKEN }}
-
-      ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
+      ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
 
       E2E_ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+
+      MP_ACCESS_TOKEN: ${{ secrets.MP_ACCESS_TOKEN }}
 
     steps:
       - name: Checkout repository
