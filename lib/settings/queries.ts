@@ -1,7 +1,7 @@
 // lib/settings/queries.ts
 
-import { sql } from '@/lib/db';
 import { CheckoutError } from '@/lib/checkout/checkout-error';
+import { sql } from '../database/neon';
 
 type SettingRow = {
   key: string;

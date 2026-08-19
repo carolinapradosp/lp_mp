@@ -1,17 +1,9 @@
 // app/api/payment-status/route.ts
 
-import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 
+import { sql } from '@/lib/database/neon';
 import { syncPaymentStatus } from '@/lib/mercadopago/sync-payment-status';
-
-const databaseUrl = process.env.DATABASE_URL_PRD ?? process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error('DATABASE_URL_PRD ou DATABASE_URL não configurada.');
-}
-
-const sql = neon(databaseUrl);
 
 export async function GET(request: Request) {
   try {
@@ -40,12 +32,12 @@ export async function GET(request: Request) {
     }
 
     const paymentResult = await sql`
-        SELECT
-          status
-        FROM public.payments
-        WHERE mercadopago_payment_id = ${paymentId}
-        LIMIT 1
-      `;
+      SELECT
+        status
+      FROM public.payments
+      WHERE mercadopago_payment_id = ${paymentId}
+      LIMIT 1
+    `;
 
     const payment = paymentResult[0];
 

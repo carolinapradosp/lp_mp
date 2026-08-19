@@ -1,10 +1,8 @@
 //api/admin/orders/[id]/route.ts
 import { verifyAdminSession } from '@/lib/auth/admin-session';
-import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 
-const sql = neon(process.env.DATABASE_URL_PRD!);
-
+import { sql } from '@/lib/database/neon';
 export async function GET(
   request: Request,
   context: {

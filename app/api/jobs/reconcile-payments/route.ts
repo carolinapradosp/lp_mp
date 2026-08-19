@@ -1,7 +1,7 @@
 // app/api/jobs/reconcile-payments/route.ts
 import { NextResponse } from 'next/server';
 import { syncPaymentStatus } from '@/lib/mercadopago/sync-payment-status';
-import { sql } from '@/lib/db';
+import { sql } from '@/lib/database/neon';
 
 export async function GET(request: Request) {
   try {

@@ -2,8 +2,8 @@
 
 import crypto from 'crypto';
 
-import { dbPool } from '@/lib/db';
 import type { CalculatedOrder, CheckoutInput } from '@/lib/checkout/types';
+import { dbPool } from '../database/neon';
 
 type CreatedOrderRow = {
   id: string | number;

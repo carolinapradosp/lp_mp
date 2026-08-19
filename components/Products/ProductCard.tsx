@@ -1,3 +1,4 @@
+//components/Products/ProductCard.tsx
 import Image from 'next/image';
 import { useCartStore } from '@/store/cartStore';
 import getUnitPrice from '@/utils/cart';

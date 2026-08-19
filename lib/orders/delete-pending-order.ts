@@ -1,7 +1,6 @@
 // lib/orders/delete-pending-order.ts
 
-import { dbPool } from '@/lib/db';
-
+import { dbPool } from '../database/neon';
 import type { PendingOrder } from './create-pending-order';
 
 export async function deletePendingOrder({

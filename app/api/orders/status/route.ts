@@ -3,12 +3,12 @@
 import { NextResponse } from 'next/server';
 
 import StatusPayment from '@/enum/StatusPayment';
-import { sql } from '@/lib/db';
 
 import type {
   OrderConfirmationData,
   OrderConfirmationError,
 } from '@/lib/orders/order-confirmation';
+import { sql } from '@/lib/database/neon';
 
 export const dynamic = 'force-dynamic';
 
