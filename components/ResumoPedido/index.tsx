@@ -1,4 +1,4 @@
-//components/ResumoPedido/index.tsx
+// components/ResumoPedido/index.tsx
 
 import { useCartStore } from "@/store/cartStore";
 import { formatCurrency } from "@/utils/utils";
@@ -9,7 +9,6 @@ export default function ResumoPedido() {
 
     return (
         <div className="w-full">
-
             {/* HEADER INTERNO */}
             <div className="mb-6 flex items-center justify-between border-b border-brand-border pb-4">
                 <h2 className="text-xl font-medium tracking-tight text-[var(--color-brand-dark)]">
@@ -17,7 +16,7 @@ export default function ResumoPedido() {
                 </h2>
 
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-muted)]">
-                    {products.length} {products.length > 1 ? 'itens' : 'item'}
+                    {products.length} {products.length > 1 ? "itens" : "item"}
                 </span>
             </div>
 
@@ -28,17 +27,24 @@ export default function ResumoPedido() {
                         key={product.id}
                         className="group flex flex-row items-center gap-4 py-4 bg-transparent transition-colors duration-200"
                     >
-                        {/* WRAPPER DA IMAGEM - Minimalista com borda fina */}
-                        <div className={`flex h-16 w-16 shrink-0 items-center justify-center border border-brand-border p-2 transition-colors duration-300 group-hover:border-[var(--color-brand-dark)] ${product.image_url ? "bg-white" : "bg-gray-100"}`}>
+                        {/* IMAGEM */}
+                        <div
+                            className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-brand-border transition-colors duration-300 group-hover:border-[var(--color-brand-dark)] ${product.image_url ? "bg-white" : "bg-gray-100"
+                                }`}
+                        >
                             {product.image_url ? (
                                 <Image
                                     src={product.image_url}
                                     alt={product.title}
-                                    width={64}
-                                    height={64}
-                                    className="h-full w-full object-contain"
+                                    fill
+                                    sizes="64px"
+                                    className="object-cover"
                                 />
-                            ) : <div className="text-xs text-center">Sem Imagem</div>}
+                            ) : (
+                                <div className="text-xs text-center">
+                                    Sem Imagem
+                                </div>
+                            )}
                         </div>
 
                         {/* INFO DO PRODUTO (Título e Qtd) */}
@@ -48,7 +54,10 @@ export default function ResumoPedido() {
                             </h3>
 
                             <p className="mt-1 text-xs text-[var(--color-brand-muted)]">
-                                Qtd: <span className="font-medium text-[var(--color-brand-dark)]">{product.quantity}</span>
+                                Qtd:{" "}
+                                <span className="font-medium text-[var(--color-brand-dark)]">
+                                    {product.quantity}
+                                </span>
                             </p>
                         </div>
 
