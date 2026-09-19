@@ -65,8 +65,11 @@ export default function ProductCard({ product }: ProductCardProps) {
     return (
         <article className="group flex h-full flex-col bg-[var(--color-brand-bg)] transition-all duration-300">
 
-            {/* IMAGEM - Container limpo com bordas finas */}
-            <div className={`relative flex aspect-square items-center justify-center overflow-hidden border border-brand-border  p-6 transition-colors duration-300 group-hover:border-[var(--color-brand-bg)] ${product.image_url ? 'bg-white' : 'bg-gray-100'}`}>
+            {/* IMAGEM */}
+            <div
+                className={`relative flex aspect-square items-center justify-center overflow-hidden border border-brand-border transition-colors duration-300 group-hover:border-[var(--color-brand-bg)] ${product.image_url ? 'bg-white' : 'bg-gray-100'
+                    }`}
+            >
                 {hasDiscount && (
                     <div className="absolute left-3 top-3 z-20 border border-[var(--color-brand-accent)] bg-[var(--color-brand-bg)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand-accent)]">
                         Oferta
@@ -77,11 +80,16 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <Image
                         src={product.image_url}
                         alt={product.title}
-                        width={220}
-                        height={220}
-                        className="h-auto max-h-48 w-auto max-w-full object-contain transition-transform duration-500 group-hover:scale-102"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                     />
-                ) : <div className='font-black text-xl text-center'>Imagem <br />Indisponível</div>}
+                ) : (
+                    <div className="text-center text-xl font-black">
+                        Imagem <br />
+                        Indisponível
+                    </div>
+                )}
             </div>
 
             {/* CONTEÚDO */}
