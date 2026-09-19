@@ -284,7 +284,7 @@ export default function MiniCart() {
                                     >
                                         <div
                                             className={`
-                        flex h-20 w-20 shrink-0
+                        relative flex h-20 w-20 shrink-0
                         items-center justify-center
                         overflow-hidden
                         border border-brand-border
@@ -296,13 +296,9 @@ export default function MiniCart() {
                                                 <Image
                                                     src={product.image_url}
                                                     alt={product.title}
-                                                    width={64}
-                                                    height={64}
-                                                    className="
-                            h-auto w-auto
-                            max-h-[80%]
-                            object-contain
-                          "
+                                                    fill
+                                                    sizes="80px"
+                                                    className="object-cover"
                                                 />
                                             ) : <div className="text-xs text-center">Sem Imagem</div>}
                                         </div>
