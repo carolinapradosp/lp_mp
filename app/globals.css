@@ -39,6 +39,11 @@
   }
 } */
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   background: #fafafa;
   margin: 0;
@@ -46,7 +51,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow-x: hidden;
   font-family: 'Montserrat', sans-serif;
   color: #000;
   position: relative;
